@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}Smart Wakala - Simplify Your Mobile Money Business{% endblock %}
+
+{% block content %}
+<div class="row align-items-center min-vh-75">
+    <div class="col-md-6">
+        <h1 class="display-4 fw-bold mb-4">Simplify Your Mobile Money Business</h1>
+        <p class="lead mb-4">Smart Wakala helps mobile money agents manage transactions, track customers, and grow their business with powerful digital tools.</p>
+        <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+            <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg px-4 me-md-2">Get Started</a>
+            <a href="#features" class="btn btn-outline-secondary btn-lg px-4">Learn More</a>
+        </div>
+    </div>
+    <div class="col-md-6 d-none d-md-block">
+        <img src="{{ url_for('static', filename='images/hero-image.svg') }}" alt="Smart Wakala Dashboard" class="img-fluid">
+    </div>
+</div>
+
+<section id="features" class="py-5 mt-5">
+    <h2 class="text-center mb-5">Features</h2>
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="bi bi-arrow-left-right text-primary display-4 mb-3"></i>
+                    <h3 class="card-title h5">Transaction Management</h3>
+                    <p class="card-text">Record and track all your mobile money transactions in one place with ease.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="bi bi-people text-primary display-4 mb-3"></i>
+                    <h3 class="card-title h5">Customer Database</h3>
+                    <p class="card-text">Build and maintain a database of your regular customers for better service.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="bi bi-bar-chart text-primary display-4 mb-3"></i>
+                    <h3 class="card-title h5">Business Analytics</h3>
+                    <p class="card-text">Gain insights into your business performance with detailed reports and analytics.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h2 class="mb-4">Why Choose Smart Wakala?</h2>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item bg-transparent"><i class="bi bi-check-circle-fill text-success me-2"></i> Easy to use interface designed for mobile money agents</li>
+                    <li class="list-group-item bg-transparent"><i class="bi bi-check-circle-fill text-success me-2"></i> Works offline and syncs when internet is available</li>
+                    <li class="list-group-item bg-transparent"><i class="bi bi-check-circle-fill text-success me-2"></i> Secure and reliable with data backup</li>
+                    <li class="list-group-item bg-transparent"><i class="bi bi-check-circle-fill text-success me-2"></i> Supports all major mobile money providers</li>
+                    <li class="list-group-item bg-transparent"><i class="bi bi-check-circle-fill text-success me-2"></i> Affordable pricing plans for businesses of all sizes</li>
+                </ul>
+            </div>
+            <div class="col-md-6 mt-4 mt-md-0">
+                <img src="{{ url_for('static', filename='images/features.svg') }}" alt="Smart Wakala Features" class="img-fluid">
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
