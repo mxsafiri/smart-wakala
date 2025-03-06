@@ -1,195 +1,233 @@
 import React, { useState } from 'react';
-import { useDispatch } from 'react-redux';
-import { useNavigate, Link } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from 'yup';
+import { motion } from 'framer-motion';
+import { FiUser, FiMail, FiLock, FiEye, FiEyeOff, FiBriefcase, FiPhone } from 'react-icons/fi';
+import Input from '../ui/Input';
+import Button from '../ui/Button';
 import { registerUser } from '../../store/slices/authSlice';
-import Button from '../common/Button';
-import Input from '../common/Input';
-import Card from '../common/Card';
+import { RootState, AppDispatch } from '../../store';
+import { IconComponent } from '../../utils/iconUtils';
+
+// Form validation schema
+const schema = yup.object().shape({
+  fullName: yup.string().required('Full name is required'),
+  email: yup.string().email('Invalid email address').required('Email is required'),
+  password: yup
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .required('Password is required'),
+  confirmPassword: yup
+    .string()
+    .oneOf([yup.ref('password')], 'Passwords must match')
+    .required('Confirm password is required'),
+  businessName: yup.string().required('Business name is required'),
+  phone: yup
+    .string()
+    .matches(/^[0-9+\s-]+$/, 'Invalid phone number')
+    .required('Phone number is required'),
+});
+
+// Form data interface
+interface RegisterFormData {
+  fullName: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+  businessName: string;
+  phone: string;
+}
 
 const RegisterForm: React.FC = () => {
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    fullName: '',
-    businessName: '',
-    phoneNumber: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
+  const dispatch = useDispatch<AppDispatch>();
+  const { loading, error, isOffline } = useSelector((state: RootState) => state.auth);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm<RegisterFormData>({
+    resolver: yupResolver(schema),
+    mode: 'onChange',
   });
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-    // Clear error when user types
-    if (errors[name]) {
-      setErrors((prev) => ({
-        ...prev,
-        [name]: '',
-      }));
-    }
-  };
-
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-    
-    if (!formData.fullName) {
-      newErrors.fullName = 'Full name is required';
-    }
-    
-    if (!formData.businessName) {
-      newErrors.businessName = 'Business name is required';
-    }
-    
-    if (!formData.phoneNumber) {
-      newErrors.phoneNumber = 'Phone number is required';
-    } else if (!/^\d{10,12}$/.test(formData.phoneNumber)) {
-      newErrors.phoneNumber = 'Please enter a valid phone number';
-    }
-    
-    if (!formData.email) {
-      newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email is invalid';
-    }
-    
-    if (!formData.password) {
-      newErrors.password = 'Password is required';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
-    }
-    
-    if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
-    }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!validateForm()) return;
-    
-    setIsLoading(true);
+  
+  // Form submission handler
+  const onSubmit = async (data: RegisterFormData) => {
     try {
-      await dispatch(registerUser(formData) as any);
-      navigate('/dashboard');
-    } catch (error: any) {
-      setErrors({
-        form: error.message || 'Failed to register. Please try again.',
-      });
-    } finally {
-      setIsLoading(false);
+      await dispatch(
+        registerUser({
+          fullName: data.fullName,
+          businessName: data.businessName,
+          phoneNumber: data.phone,
+          email: data.email,
+          password: data.password,
+        })
+      );
+      reset();
+    } catch (error) {
+      console.error('Registration error:', error);
     }
   };
-
+  
+  // Animation variants
+  const formVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.4,
+        staggerChildren: 0.1,
+      },
+    },
+  };
+  
+  const itemVariants = {
+    hidden: { opacity: 0, y: 10 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.3 },
+    },
+  };
+  
+  // Toggle password visibility
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+  
+  // Toggle confirm password visibility
+  const toggleConfirmPasswordVisibility = () => {
+    setShowConfirmPassword(!showConfirmPassword);
+  };
+  
   return (
-    <Card className="max-w-md mx-auto">
-      <h2 className="text-2xl font-bold text-center mb-6">Create an Account</h2>
+    <motion.div
+      className="w-full max-w-md mx-auto p-6 bg-white rounded-lg shadow-md"
+      variants={formVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      <div className="text-center mb-8">
+        <h2 className="text-2xl font-bold text-gray-800">Create an Account</h2>
+        <p className="text-gray-600 mt-2">
+          Register as a Smart Wakala agent
+        </p>
+      </div>
       
-      {errors.form && (
-        <div className="bg-red-50 text-red-600 p-3 rounded mb-4">
-          {errors.form}
+      {error && (
+        <div className="mb-6 p-3 bg-red-100 text-red-700 rounded-md text-sm">
+          {error}
         </div>
       )}
       
-      <form onSubmit={handleSubmit}>
-        <Input
-          id="fullName"
-          name="fullName"
-          label="Full Name"
-          placeholder="Enter your full name"
-          value={formData.fullName}
-          onChange={handleChange}
-          error={errors.fullName}
-          required
-        />
+      {isOffline && (
+        <div className="mb-6 p-3 bg-yellow-100 text-yellow-700 rounded-md text-sm">
+          You are currently offline. Registration requires an internet connection.
+        </div>
+      )}
+      
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+        <motion.div variants={itemVariants}>
+          <Input
+            label="Full Name"
+            placeholder="Enter your full name"
+            error={errors.fullName?.message}
+            {...register('fullName')}
+            leftIcon={<IconComponent Icon={FiUser} />}
+          />
+        </motion.div>
         
-        <Input
-          id="businessName"
-          name="businessName"
-          label="Business Name"
-          placeholder="Enter your business name"
-          value={formData.businessName}
-          onChange={handleChange}
-          error={errors.businessName}
-          required
-        />
+        <motion.div variants={itemVariants}>
+          <Input
+            label="Email Address"
+            placeholder="Enter your email"
+            error={errors.email?.message}
+            {...register('email')}
+            leftIcon={<IconComponent Icon={FiMail} />}
+          />
+        </motion.div>
         
-        <Input
-          id="phoneNumber"
-          name="phoneNumber"
-          type="tel"
-          label="Phone Number"
-          placeholder="Enter your phone number"
-          value={formData.phoneNumber}
-          onChange={handleChange}
-          error={errors.phoneNumber}
-          required
-        />
+        <motion.div variants={itemVariants}>
+          <Input
+            label="Password"
+            placeholder="Enter your password"
+            type={showPassword ? 'text' : 'password'}
+            error={errors.password?.message}
+            {...register('password')}
+            leftIcon={<IconComponent Icon={FiLock} />}
+            rightIcon={
+              <button type="button" onClick={togglePasswordVisibility} className="focus:outline-none">
+                <IconComponent Icon={showPassword ? FiEyeOff : FiEye} />
+              </button>
+            }
+          />
+        </motion.div>
         
-        <Input
-          id="email"
-          name="email"
-          type="email"
-          label="Email Address"
-          placeholder="Enter your email"
-          value={formData.email}
-          onChange={handleChange}
-          error={errors.email}
-          required
-        />
+        <motion.div variants={itemVariants}>
+          <Input
+            label="Confirm Password"
+            placeholder="Confirm your password"
+            type={showConfirmPassword ? 'text' : 'password'}
+            error={errors.confirmPassword?.message}
+            {...register('confirmPassword')}
+            leftIcon={<IconComponent Icon={FiLock} />}
+            rightIcon={
+              <button type="button" onClick={toggleConfirmPasswordVisibility} className="focus:outline-none">
+                <IconComponent Icon={showConfirmPassword ? FiEyeOff : FiEye} />
+              </button>
+            }
+          />
+        </motion.div>
         
-        <Input
-          id="password"
-          name="password"
-          type="password"
-          label="Password"
-          placeholder="Create a password"
-          value={formData.password}
-          onChange={handleChange}
-          error={errors.password}
-          required
-        />
+        <motion.div variants={itemVariants}>
+          <Input
+            label="Business Name"
+            placeholder="Enter your business name"
+            error={errors.businessName?.message}
+            {...register('businessName')}
+            leftIcon={<IconComponent Icon={FiBriefcase} />}
+          />
+        </motion.div>
         
-        <Input
-          id="confirmPassword"
-          name="confirmPassword"
-          type="password"
-          label="Confirm Password"
-          placeholder="Confirm your password"
-          value={formData.confirmPassword}
-          onChange={handleChange}
-          error={errors.confirmPassword}
-          required
-        />
+        <motion.div variants={itemVariants}>
+          <Input
+            label="Phone Number"
+            placeholder="Enter your phone number"
+            error={errors.phone?.message}
+            {...register('phone')}
+            leftIcon={<IconComponent Icon={FiPhone} />}
+          />
+        </motion.div>
         
-        <div className="mt-6">
+        <motion.div variants={itemVariants} className="pt-2">
           <Button
             type="submit"
             variant="primary"
-            fullWidth
-            disabled={isLoading}
+            size="lg"
+            className="w-full"
+            loading={loading}
+            disabled={loading || isOffline}
           >
-            {isLoading ? 'Creating Account...' : 'Register'}
+            Register
           </Button>
-        </div>
-        
-        <div className="text-center mt-4">
-          <span className="text-gray-600">Already have an account?</span>{' '}
-          <Link to="/login" className="text-primary-600 hover:text-primary-500">
-            Login
-          </Link>
-        </div>
+        </motion.div>
       </form>
-    </Card>
+      
+      <motion.div variants={itemVariants} className="mt-6 text-center">
+        <p className="text-gray-600">
+          Already have an account?{' '}
+          <a href="/login" className="text-primary-600 hover:text-primary-700 font-medium">
+            Sign In
+          </a>
+        </p>
+      </motion.div>
+    </motion.div>
   );
 };
 

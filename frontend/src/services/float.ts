@@ -14,6 +14,7 @@ import {
 } from 'firebase/firestore';
 import { db } from './firebase';
 import { getOverdraftData } from './overdraft';
+import { FloatTransaction } from '../store/slices/floatSlice';
 
 export interface FloatTopUp {
   amount: number;
@@ -36,7 +37,7 @@ export const getFloatBalance = async (userId: string) => {
   }
 };
 
-export const getFloatTransactions = async (userId: string, limitCount = 10) => {
+export const getFloatTransactions = async (userId: string, limitCount = 10): Promise<FloatTransaction[]> => {
   try {
     const q = query(
       collection(db, 'floatTransactions'),
@@ -46,10 +47,36 @@ export const getFloatTransactions = async (userId: string, limitCount = 10) => {
     );
     
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
+    
+    // Mock data if no transactions exist yet
+    if (querySnapshot.empty) {
+      return Array(3).fill(null).map((_, index) => ({
+        id: `mock-${index}`,
+        amount: 50000 * (index + 1),
+        timestamp: Date.now() - (index * 86400000),
+        provider: ['Vodacom', 'Airtel', 'Tigo'][index % 3],
+        status: 'completed' as const,
+        repaymentAmount: 5000 * (index + 1),
+        type: 'top-up' as const,
+        date: new Date(Date.now() - (index * 86400000)).toISOString().split('T')[0],
+        description: `Float top-up transaction #${index + 1}`
+      }));
+    }
+    
+    return querySnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        amount: data.amount || 0,
+        timestamp: data.timestamp?.toMillis() || Date.now(),
+        provider: data.provider || 'Unknown',
+        status: data.status || 'completed',
+        repaymentAmount: data.repaymentAmount || 0,
+        type: data.type || 'top-up',
+        date: data.date || new Date().toISOString().split('T')[0],
+        description: data.description || 'Float transaction'
+      } as FloatTransaction;
+    });
   } catch (error) {
     console.error('Error getting float transactions:', error);
     throw error;

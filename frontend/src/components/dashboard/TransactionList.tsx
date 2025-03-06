@@ -1,126 +1,331 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
-import Card from '../common/Card';
-import Button from '../common/Button';
-import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { FloatTransaction } from '../../store/slices/floatSlice';
+import { FiPlus, FiMinus, FiRefreshCw, FiClock } from 'react-icons/fi';
+import { IconComponent } from '../../utils/iconUtils';
 
-const TransactionList: React.FC = () => {
+// Interface for a transaction
+interface TransactionType {
+  id: string;
+  type: string;
+  amount: number;
+  status: string;
+  date: string;
+  customer: string;
+  description?: string;
+}
+
+// Props for the TransactionList component
+interface TransactionListComponentProps {
+  transactions: TransactionType[];
+  getStatusBadge?: (status: string) => React.ReactNode;
+  getTransactionIcon?: (type: string) => React.ReactNode;
+  formatCurrency?: (amount: number) => string;
+  maxItems?: number;
+}
+
+const TransactionList: React.FC<TransactionListComponentProps> = ({
+  transactions,
+  getStatusBadge,
+  getTransactionIcon,
+  formatCurrency = (amount) => 
+    new Intl.NumberFormat('sw-TZ', {
+      style: 'currency',
+      currency: 'TZS',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(amount),
+  maxItems = 5
+}) => {
+  // Format date string
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.round(diffMs / 60000);
+    const diffHours = Math.round(diffMs / 3600000);
+    const diffDays = Math.round(diffMs / 86400000);
+    
+    if (diffMins < 60) {
+      return `${diffMins} min${diffMins !== 1 ? 's' : ''} ago`;
+    } else if (diffHours < 24) {
+      return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
+    } else if (diffDays < 7) {
+      return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
+    } else {
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    }
+  };
+  
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.05
+      }
+    }
+  };
+  
+  const itemVariants = {
+    hidden: { opacity: 0, y: 10 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.2 }
+    }
+  };
+  
+  // Get transaction type label
+  const getTransactionTypeLabel = (type: string) => {
+    switch (type) {
+      case 'deposit':
+        return 'Deposit';
+      case 'withdrawal':
+        return 'Withdrawal';
+      case 'transfer':
+        return 'Transfer';
+      default:
+        return type.charAt(0).toUpperCase() + type.slice(1);
+    }
+  };
+
+  // Default status badge if not provided
+  const defaultStatusBadge = (status: string) => {
+    const statusClasses = {
+      completed: 'bg-green-100 text-green-800',
+      pending: 'bg-yellow-100 text-yellow-800',
+      failed: 'bg-red-100 text-red-800',
+      processing: 'bg-blue-100 text-blue-800',
+    };
+    
+    const statusClass = statusClasses[status.toLowerCase() as keyof typeof statusClasses] || 'bg-gray-100 text-gray-800';
+    
+    return (
+      <span className={`text-xs px-2 py-1 rounded-full ${statusClass}`}>
+        {status.charAt(0).toUpperCase() + status.slice(1)}
+      </span>
+    );
+  };
+
+  // Default transaction icon if not provided
+  const defaultTransactionIcon = (type: string) => {
+    const iconTypes = {
+      deposit: FiPlus,
+      withdrawal: FiMinus,
+      transfer: FiRefreshCw,
+      pending: FiClock
+    };
+    
+    const IconToUse = iconTypes[type.toLowerCase() as keyof typeof iconTypes] || FiRefreshCw;
+    
+    const bgColors = {
+      deposit: 'bg-green-100 text-green-600',
+      withdrawal: 'bg-red-100 text-red-600',
+      transfer: 'bg-blue-100 text-blue-600',
+      pending: 'bg-yellow-100 text-yellow-600'
+    };
+    
+    const bgColor = bgColors[type.toLowerCase() as keyof typeof bgColors] || 'bg-gray-100 text-gray-600';
+    
+    return (
+      <div className={`p-2 rounded-full ${bgColor}`}>
+        <IconComponent Icon={IconToUse} />
+      </div>
+    );
+  };
+  
+  // Limit the number of transactions to display
+  const displayTransactions = transactions.slice(0, maxItems);
+  
+  return (
+    <div className="bg-white rounded-lg shadow-md overflow-hidden">
+      <div className="p-6 border-b border-gray-200">
+        <h3 className="text-lg font-semibold text-gray-800">Recent Transactions</h3>
+      </div>
+      
+      {displayTransactions.length === 0 ? (
+        <div className="p-6 text-center text-gray-500">
+          No transactions found
+        </div>
+      ) : (
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="divide-y divide-gray-200"
+        >
+          {displayTransactions.map((transaction) => (
+            <motion.div
+              key={transaction.id}
+              variants={itemVariants}
+              className="p-4 hover:bg-gray-50 transition-colors"
+            >
+              <div className="flex items-center">
+                <div className="mr-4">
+                  {getTransactionIcon 
+                    ? getTransactionIcon(transaction.type)
+                    : defaultTransactionIcon(transaction.type)
+                  }
+                </div>
+                
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-1">
+                    <h4 className="text-sm font-medium text-gray-900 truncate">
+                      {getTransactionTypeLabel(transaction.type)}
+                    </h4>
+                    <div className="ml-2">
+                      {getStatusBadge 
+                        ? getStatusBadge(transaction.status)
+                        : defaultStatusBadge(transaction.status)
+                      }
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-500 truncate">
+                        {transaction.customer}
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        {formatDate(transaction.date)}
+                      </p>
+                    </div>
+                    
+                    <div className="text-sm font-semibold">
+                      {formatCurrency(transaction.amount)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </motion.div>
+      )}
+      
+      {transactions.length > maxItems && (
+        <div className="p-4 border-t border-gray-200">
+          <button className="text-primary-600 hover:text-primary-700 text-sm font-medium">
+            View all transactions
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Adapter function to convert FloatTransaction to Transaction
+export const adaptFloatTransaction = (floatTransaction: FloatTransaction): TransactionType => {
+  return {
+    id: floatTransaction.id,
+    type: floatTransaction.type,
+    amount: floatTransaction.amount,
+    date: floatTransaction.date,
+    status: floatTransaction.status,
+    customer: floatTransaction.provider || 'Unknown',
+    description: floatTransaction.description
+  };
+};
+
+const DefaultTransactionList = () => {
   const { transactions } = useSelector((state: RootState) => state.float);
+  
+  // Format currency
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('sw-TZ', {
+      style: 'currency',
+      currency: 'TZS',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(amount);
+  };
+  
+  // Function to get status badge based on status
+  const getStatusBadge = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'completed':
+        return (
+          <span className="px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-800">
+            Completed
+          </span>
+        );
+      case 'pending':
+        return (
+          <span className="px-2 py-0.5 text-xs rounded-full bg-yellow-100 text-yellow-800">
+            Pending
+          </span>
+        );
+      case 'failed':
+        return (
+          <span className="px-2 py-0.5 text-xs rounded-full bg-red-100 text-red-800">
+            Failed
+          </span>
+        );
+      default:
+        return (
+          <span className="px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-800">
+            {status.charAt(0).toUpperCase() + status.slice(1)}
+          </span>
+        );
+    }
+  };
   
   // Function to get transaction icon based on type
   const getTransactionIcon = (type: string) => {
-    switch (type) {
+    switch (type.toLowerCase()) {
+      case 'deposit':
       case 'top-up':
         return (
           <div className="p-2 rounded-full bg-green-100">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-green-600" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clipRule="evenodd" />
-            </svg>
+            <IconComponent Icon={FiPlus} className="h-4 w-4 text-green-600" />
           </div>
         );
       case 'withdrawal':
         return (
           <div className="p-2 rounded-full bg-red-100">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-red-600" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 000 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
-            </svg>
+            <IconComponent Icon={FiMinus} className="h-4 w-4 text-red-600" />
           </div>
         );
-      case 'repayment':
+      case 'transfer':
         return (
           <div className="p-2 rounded-full bg-blue-100">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-blue-600" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clipRule="evenodd" />
-            </svg>
+            <IconComponent Icon={FiRefreshCw} className="h-4 w-4 text-blue-600" />
           </div>
         );
       default:
         return (
           <div className="p-2 rounded-full bg-gray-100">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-600" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-            </svg>
+            <IconComponent Icon={FiRefreshCw} className="h-4 w-4 text-gray-600" />
           </div>
         );
     }
   };
   
-  // Function to get transaction amount color based on type
-  const getAmountColor = (type: string) => {
-    switch (type) {
-      case 'top-up':
-        return 'text-green-600';
-      case 'withdrawal':
-        return 'text-red-600';
-      case 'repayment':
-        return 'text-blue-600';
-      default:
-        return 'text-gray-600';
-    }
-  };
-  
-  // Function to get transaction amount prefix based on type
-  const getAmountPrefix = (type: string) => {
-    switch (type) {
-      case 'top-up':
-        return '+';
-      case 'withdrawal':
-        return '-';
-      case 'repayment':
-        return '-';
-      default:
-        return '';
-    }
-  };
+  // Convert FloatTransaction to Transaction
+  const adaptedTransactions = transactions.map(adaptFloatTransaction);
   
   return (
-    <Card 
-      title="Recent Transactions"
-      footer={
-        <div className="flex justify-end">
-          <Link to="/transactions">
-            <Button variant="outline" size="sm">
-              View All Transactions
-            </Button>
-          </Link>
-        </div>
-      }
-    >
-      {transactions.length > 0 ? (
-        <div className="space-y-4">
-          {transactions.slice(0, 5).map((transaction) => (
-            <div key={transaction.id} className="flex justify-between items-center">
-              <div className="flex items-center">
-                {getTransactionIcon(transaction.type)}
-                <div className="ml-3">
-                  <p className="text-sm font-medium text-gray-700">
-                    {transaction.description}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {new Date(transaction.date).toLocaleDateString()} • {new Date(transaction.date).toLocaleTimeString()}
-                  </p>
-                </div>
-              </div>
-              <span className={`text-sm font-medium ${getAmountColor(transaction.type)}`}>
-                {getAmountPrefix(transaction.type)} TZS {transaction.amount.toLocaleString()}
-              </span>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="py-6 text-center">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-          </svg>
-          <h3 className="mt-2 text-sm font-medium text-gray-900">No transactions</h3>
-          <p className="mt-1 text-sm text-gray-500">
-            Your recent transactions will appear here.
-          </p>
-        </div>
-      )}
-    </Card>
+    <TransactionList
+      transactions={adaptedTransactions}
+      getStatusBadge={getStatusBadge}
+      getTransactionIcon={getTransactionIcon}
+      formatCurrency={formatCurrency}
+    />
   );
 };
 
-export default TransactionList;
+// Export the component
+export { TransactionList };
+
+// Export the types with new names to avoid conflicts
+export type { TransactionType as Transaction, TransactionListComponentProps as TransactionListProps };
+
+// Default export is the container component
+export default DefaultTransactionList;

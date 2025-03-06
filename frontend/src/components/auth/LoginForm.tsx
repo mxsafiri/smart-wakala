@@ -1,21 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { loginUser } from '../../store/slices/authSlice';
 import { RootState } from '../../store';
 import Button from '../common/Button';
-import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../../services/firebase';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 
 const LoginForm: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { loading, error, isOffline } = useSelector((state: RootState) => state.auth);
+  const { loading, error, isOffline, isAuthenticated } = useSelector((state: RootState) => state.auth);
   
   const [email, setEmail] = useState('agent@smartwakala.com');
   const [password, setPassword] = useState('password123');
   const [showPassword, setShowPassword] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [directLoginAttempt, setDirectLoginAttempt] = useState(false);
+  
+  // Check if user is already authenticated and redirect if needed
+  useEffect(() => {
+    if (isAuthenticated && !loading) {
+      console.log('User already authenticated, redirecting to dashboard');
+      navigate('/dashboard', { replace: true });
+    }
+  }, [isAuthenticated, loading, navigate]);
   
   const validateForm = () => {
     const errors: Record<string, string> = {};
@@ -42,22 +52,37 @@ const LoginForm: React.FC = () => {
     
     if (!validateForm()) return;
     
+    // Don't attempt login if offline
+    if (isOffline) {
+      setLoginError('You are currently offline. Please check your connection and try again.');
+      return;
+    }
+    
     try {
       console.log('Attempting login with:', email);
+      setDirectLoginAttempt(true);
       
-      // First dispatch to Redux store to update loading state
-      dispatch(loginUser({ email, password }) as any)
-        .then(() => {
-          console.log('Login successful, navigating to dashboard');
-          navigate('/dashboard', { replace: true });
-        })
-        .catch((error: any) => {
-          console.error('Login error from Redux:', error);
-          handleLoginError(error);
-        });
+      // Try direct Firebase authentication first to avoid potential Redux issues
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      if (userCredential.user) {
+        console.log('Direct Firebase login successful, now syncing with Redux');
+        
+        // Then sync with Redux store
+        dispatch(loginUser({ email, password }) as any)
+          .then(() => {
+            console.log('Redux sync successful, navigating to dashboard');
+            navigate('/dashboard', { replace: true });
+          })
+          .catch((error: any) => {
+            console.warn('Redux sync had issues, but Firebase auth succeeded. Proceeding anyway.');
+            // Even if Redux sync fails, we can still navigate since Firebase auth succeeded
+            navigate('/dashboard', { replace: true });
+          });
+      }
     } catch (error: any) {
       console.error('Login error:', error);
       handleLoginError(error);
+      setDirectLoginAttempt(false);
     }
   };
 
@@ -71,6 +96,8 @@ const LoginForm: React.FC = () => {
       setLoginError('Too many failed login attempts. Please try again later');
     } else if (error.code === 'auth/network-request-failed') {
       setLoginError('Network error. Please check your connection');
+    } else if (error.code === 'auth/invalid-credential') {
+      setLoginError('Invalid login credentials. Please check your email and password');
     } else {
       setLoginError(error.message || 'Failed to sign in. Please try again.');
     }
@@ -81,6 +108,17 @@ const LoginForm: React.FC = () => {
       {(error || loginError) && (
         <div className="p-3 bg-red-50 border border-red-200 rounded-md">
           <p className="text-sm text-red-600">{loginError || error}</p>
+        </div>
+      )}
+      
+      {isOffline && (
+        <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+          <p className="flex items-center text-sm text-yellow-700">
+            <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd"></path>
+            </svg>
+            You are currently offline. Login is disabled until your connection is restored.
+          </p>
         </div>
       )}
       
@@ -181,10 +219,10 @@ const LoginForm: React.FC = () => {
         <Button
           type="submit"
           fullWidth
-          disabled={loading || isOffline}
+          disabled={loading || isOffline || directLoginAttempt}
           className="bg-primary-600 text-white hover:bg-primary-700"
         >
-          {loading ? 'Signing in...' : 'Sign in'}
+          {loading || directLoginAttempt ? 'Signing in...' : 'Sign in'}
         </Button>
       </div>
     </form>
