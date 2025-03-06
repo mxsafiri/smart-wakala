@@ -14,7 +14,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
-      <Header />
+      {isAuthenticated && <Header />}
       
       <div className="flex flex-1">
         {isAuthenticated && <Sidebar />}
