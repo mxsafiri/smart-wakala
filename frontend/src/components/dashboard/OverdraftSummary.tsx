@@ -1,82 +1,138 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
+import 'react-circular-progressbar/dist/styles.css';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
-import Card from '../common/Card';
+import Card from '../ui/Card';
+import Icon from '../ui/Icon';
+import { useNavigate } from 'react-router-dom';
 
 const OverdraftSummary: React.FC = () => {
-  const { overdraftBalance, overdraftLimit, repaymentProgress } = useSelector(
-    (state: RootState) => state.overdraft
-  );
+  const [expanded, setExpanded] = useState(false);
+  const navigate = useNavigate();
+  const { 
+    overdraftBalance, 
+    overdraftLimit, 
+    availableOverdraft,
+    totalRepaid,
+    repaymentPercentage,
+    lastTopUpAmount,
+    lastAutoDeduction
+  } = useSelector((state: RootState) => state.overdraft);
+  
+  // Calculate values for display
+  const overdraftUsed = overdraftBalance || 0;
+  const nextAutoDeductionEstimate = Math.round((lastTopUpAmount || 0) * (repaymentPercentage / 100));
   
   // Calculate percentage of overdraft used
-  const overdraftUsedPercentage = overdraftLimit > 0
-    ? Math.min(100, Math.round((overdraftBalance / overdraftLimit) * 100))
+  const overdraftUsedPercentage = overdraftLimit > 0 
+    ? Math.min(100, Math.round((overdraftUsed / overdraftLimit) * 100))
     : 0;
   
-  // Calculate repayment progress percentage
-  const repaymentProgressPercentage = Math.round(repaymentProgress * 100);
+  // Format currency
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('sw-TZ', {
+      style: 'currency',
+      currency: 'TZS',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(amount);
+  };
+  
+  // Handle navigation to top-up page
+  const handleTopUpClick = () => {
+    navigate('/float-top-up');
+  };
   
   return (
-    <Card title="Overdraft Summary">
-      <div className="space-y-6">
-        <div>
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-sm font-medium text-gray-700">Overdraft Balance</span>
-            <span className="text-sm font-medium text-gray-900">
-              TZS {overdraftBalance.toLocaleString()}
-            </span>
+    <Card>
+      <h3 className="card-title font-display">Float Overdraft</h3>
+      
+      <div className="flex items-start justify-between mt-4">
+        <div className="w-1/2">
+          <div className="mb-4">
+            <p className="text-sm text-gray-600">Used</p>
+            <p className="text-xl font-display font-semibold financial-figure text-purple-700">
+              {formatCurrency(overdraftUsed)}
+            </p>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-2.5">
-            <div
-              className="bg-primary-600 h-2.5 rounded-full"
-              style={{ width: `${overdraftUsedPercentage}%` }}
-            ></div>
+          
+          <div className="mb-4">
+            <p className="text-sm text-gray-600">Total Limit</p>
+            <p className="text-xl font-display font-semibold financial-figure">
+              {formatCurrency(overdraftLimit)}
+            </p>
           </div>
-          <div className="flex justify-between items-center mt-1">
-            <span className="text-xs text-gray-500">
-              {overdraftUsedPercentage}% of limit used
-            </span>
-            <span className="text-xs text-gray-500">
-              Limit: TZS {overdraftLimit.toLocaleString()}
-            </span>
-          </div>
-        </div>
-        
-        <div>
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-sm font-medium text-gray-700">Repayment Progress</span>
-            <span className="text-sm font-medium text-gray-900">
-              {repaymentProgressPercentage}%
-            </span>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-2.5">
-            <div
-              className="bg-green-500 h-2.5 rounded-full"
-              style={{ width: `${repaymentProgressPercentage}%` }}
-            ></div>
-          </div>
-          <div className="flex justify-between items-center mt-1">
-            <span className="text-xs text-gray-500">
-              {repaymentProgressPercentage < 25 ? 'Just started' : 
-               repaymentProgressPercentage < 50 ? 'Making progress' :
-               repaymentProgressPercentage < 75 ? 'Good progress' : 'Almost there'}
-            </span>
-            <span className="text-xs text-gray-500">
-              Target: 100%
-            </span>
+          
+          <div>
+            <p className="text-sm text-gray-600">Available Float</p>
+            <p className="text-xl font-display font-semibold financial-figure text-green-600">
+              {formatCurrency(availableOverdraft)}
+            </p>
           </div>
         </div>
         
-        <div className="pt-4 border-t border-gray-200">
-          <h4 className="text-sm font-medium text-gray-700 mb-3">Repayment Method</h4>
-          <div className="flex items-center text-sm text-gray-600">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-            </svg>
-            <span>10% of each float top-up is deducted for repayment</span>
-          </div>
+        <div className="w-32">
+          <CircularProgressbar
+            value={overdraftUsedPercentage}
+            text={`${overdraftUsedPercentage}%`}
+            styles={buildStyles({
+              textSize: '16px',
+              pathColor: `rgba(126, 34, 206, ${overdraftUsedPercentage / 100})`,
+              textColor: '#6b21a8',
+              trailColor: '#f3f4f6',
+              backgroundColor: '#3e1f47',
+            })}
+          />
+          <p className="text-xs text-center mt-2 text-gray-600">Used Percentage</p>
         </div>
       </div>
+      
+      <div className="mt-6">
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="w-full flex items-center justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+        >
+          {expanded ? 'Show Less' : 'Show Details'} 
+          <Icon name="FiArrowRight" className="ml-2" size={16} />
+        </button>
+      </div>
+      
+      {expanded && (
+        <div className="mt-6">
+          <h4 className="text-sm font-medium text-gray-700 mb-3 font-display">Auto-Deduction Details</h4>
+          
+          <div className="space-y-3">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center">
+                <Icon name="FiArrowUp" className="h-4 w-4 text-green-500 mr-2" size={16} />
+                <span className="text-sm text-gray-600">Last Top-up</span>
+              </div>
+              <span className="text-sm font-medium financial-figure">{formatCurrency(lastTopUpAmount || 0)}</span>
+            </div>
+            
+            <div className="flex justify-between items-center">
+              <div className="flex items-center">
+                <Icon name="FiArrowDown" className="h-4 w-4 text-red-500 mr-2" size={16} />
+                <span className="text-sm text-gray-600">Auto-Deduction</span>
+              </div>
+              <span className="text-sm font-medium financial-figure">{formatCurrency(lastAutoDeduction || 0)}</span>
+            </div>
+            
+            <div className="flex justify-between items-center pt-2 border-t border-gray-200">
+              <div className="flex items-center">
+                <Icon name="FiAlertCircle" className="h-4 w-4 text-blue-500 mr-2" size={16} />
+                <span className="text-sm text-gray-600">Next Deduction (est.)</span>
+              </div>
+              <span className="text-sm font-medium financial-figure">{formatCurrency(nextAutoDeductionEstimate)}</span>
+            </div>
+            
+            <div className="pt-2 text-xs text-gray-500">
+              <p>{repaymentPercentage}% of each top-up amount is automatically deducted for overdraft repayment.</p>
+            </div>
+          </div>
+        </div>
+      )}
     </Card>
   );
 };
