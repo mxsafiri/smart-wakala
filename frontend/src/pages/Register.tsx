@@ -25,11 +25,11 @@ const Register: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center">
-          <Logo size="xl" />
+          <Logo size="xl" withText={true} />
         </div>
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          Create a new account
-        </h2>
+        <p className="mt-4 text-center text-md text-gray-600">
+          Mobile Money Agent Management Platform
+        </p>
       </div>
 
       <motion.div
@@ -38,19 +38,27 @@ const Register: React.FC = () => {
         initial="initial"
         animate="animate"
       >
-        <Card>
+        <Card className="p-8">
+          <h2 className="text-center text-2xl font-bold text-gray-900 mb-6">
+            Create Account
+          </h2>
+          
+          <p className="text-center text-gray-600 mb-6">
+            Register as a Smart Wakala agent
+          </p>
+          
           {isOffline && (
             <Alert 
               variant="warning" 
               title="You are offline" 
               message="Registration is not available while offline. Please check your connection."
-              className="mb-4"
+              className="mb-6"
             />
           )}
           
           <RegisterForm />
           
-          <div className="mt-6 text-center text-sm">
+          <div className="mt-8 text-center text-sm">
             <p className="text-gray-600">
               Already have an account?{' '}
               <Link to="/login" className="font-medium text-primary-600 hover:text-primary-500">

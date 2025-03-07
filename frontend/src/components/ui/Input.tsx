@@ -11,6 +11,7 @@ interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, '
   variant?: 'outlined' | 'filled' | 'underlined';
   animated?: boolean;
   className?: string;
+  prefix?: string;
 }
 
 const Input = forwardRef<HTMLInputElement, InputProps>(({
@@ -23,6 +24,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(({
   variant = 'outlined',
   animated = true,
   className = '',
+  prefix,
   id,
   ...props
 }, ref) => {
@@ -42,18 +44,22 @@ const Input = forwardRef<HTMLInputElement, InputProps>(({
   
   const iconClasses = {
     left: leftIcon ? "pl-10" : "",
-    right: rightIcon ? "pr-10" : ""
+    right: rightIcon ? "pr-10" : "",
+    prefix: prefix ? "pl-16" : ""
   };
   
   const fullWidthClasses = fullWidth ? "w-full" : "";
   
-  const labelClasses = `block text-sm font-medium text-gray-700 mb-1 ${error ? 'text-red-600' : ''}`;
+  const labelClasses = `block text-sm font-medium text-gray-700 mb-2 ${error ? 'text-red-600' : ''}`;
   
   const inputClasses = `
     ${baseClasses}
     ${stateClasses}
     ${iconClasses.left}
     ${iconClasses.right}
+    ${iconClasses.prefix}
+    py-3
+    text-base
     ${className}
   `;
   
@@ -98,7 +104,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(({
   };
 
   return (
-    <div className={`${fullWidthClasses}`}>
+    <div className={`${fullWidthClasses} mb-4`}>
       {label && (
         <label htmlFor={inputId} className={labelClasses}>
           {label}
@@ -106,6 +112,12 @@ const Input = forwardRef<HTMLInputElement, InputProps>(({
       )}
       
       <div className="relative">
+        {prefix && (
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+            {prefix}
+          </div>
+        )}
+        
         {leftIcon && (
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
             {leftIcon}
@@ -122,13 +134,13 @@ const Input = forwardRef<HTMLInputElement, InputProps>(({
       </div>
       
       {helperText && !error && (
-        <p className="mt-1 text-sm text-gray-500" id={`${inputId}-description`}>
+        <p className="mt-2 text-sm text-gray-500" id={`${inputId}-description`}>
           {helperText}
         </p>
       )}
       
       {error && (
-        <p className="mt-1 text-sm text-red-600" id={`${inputId}-error`}>
+        <p className="mt-2 text-sm text-red-600" id={`${inputId}-error`}>
           {error}
         </p>
       )}

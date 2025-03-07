@@ -75,30 +75,58 @@ const Logo: React.FC<LogoProps> = ({
           initial="initial"
           animate="animate"
           whileHover="hover"
-          className={`${sizeClasses[size]} bg-gradient-to-br from-primary-500 to-secondary-600 rounded-lg shadow-lg flex items-center justify-center`}
+          className={`${sizeClasses[size]} bg-gradient-to-br from-primary-500 to-secondary-600 rounded-lg shadow-lg flex items-center justify-center overflow-hidden`}
         >
           <svg 
             viewBox="0 0 24 24" 
             fill="none" 
             xmlns="http://www.w3.org/2000/svg" 
-            className="w-2/3 h-2/3 text-white"
+            className="w-3/4 h-3/4 text-white"
           >
+            {/* New simplified and iconic logo - stylized "W" with float/money element */}
             <path 
-              d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20ZM12 10.5C13.38 10.5 14.5 9.38 14.5 8C14.5 6.62 13.38 5.5 12 5.5C10.62 5.5 9.5 6.62 9.5 8C9.5 9.38 10.62 10.5 12 10.5ZM12 12.5C9.67 12.5 5 13.67 5 16V18H19V16C19 13.67 14.33 12.5 12 12.5Z" 
+              d="M4 6C4 4.89543 4.89543 4 6 4H18C19.1046 4 20 4.89543 20 6V18C20 19.1046 19.1046 20 18 20H6C4.89543 20 4 19.1046 4 18V6Z" 
+              fill="rgba(255,255,255,0.15)"
+            />
+            <path 
+              d="M5 9L8 15L12 7L16 15L19 9" 
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <circle 
+              cx="12" 
+              cy="16" 
+              r="1.5" 
               fill="currentColor"
             />
           </svg>
         </motion.div>
       ) : (
-        <div className={`${sizeClasses[size]} bg-gradient-to-br from-primary-500 to-secondary-600 rounded-lg shadow-lg flex items-center justify-center`}>
+        <div className={`${sizeClasses[size]} bg-gradient-to-br from-primary-500 to-secondary-600 rounded-lg shadow-lg flex items-center justify-center overflow-hidden`}>
           <svg 
             viewBox="0 0 24 24" 
             fill="none" 
             xmlns="http://www.w3.org/2000/svg" 
-            className="w-2/3 h-2/3 text-white"
+            className="w-3/4 h-3/4 text-white"
           >
+            {/* New simplified and iconic logo - stylized "W" with float/money element */}
             <path 
-              d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20ZM12 10.5C13.38 10.5 14.5 9.38 14.5 8C14.5 6.62 13.38 5.5 12 5.5C10.62 5.5 9.5 6.62 9.5 8C9.5 9.38 10.62 10.5 12 10.5ZM12 12.5C9.67 12.5 5 13.67 5 16V18H19V16C19 13.67 14.33 12.5 12 12.5Z" 
+              d="M4 6C4 4.89543 4.89543 4 6 4H18C19.1046 4 20 4.89543 20 6V18C20 19.1046 19.1046 20 18 20H6C4.89543 20 4 19.1046 4 18V6Z" 
+              fill="rgba(255,255,255,0.15)"
+            />
+            <path 
+              d="M5 9L8 15L12 7L16 15L19 9" 
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <circle 
+              cx="12" 
+              cy="16" 
+              r="1.5" 
               fill="currentColor"
             />
           </svg>

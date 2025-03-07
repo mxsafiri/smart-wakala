@@ -108,18 +108,10 @@ const RegisterForm: React.FC = () => {
   
   return (
     <motion.div
-      className="w-full max-w-md mx-auto p-6 bg-white rounded-lg shadow-md"
       variants={formVariants}
       initial="hidden"
       animate="visible"
     >
-      <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold text-gray-800">Create an Account</h2>
-        <p className="text-gray-600 mt-2">
-          Register as a Smart Wakala agent
-        </p>
-      </div>
-      
       {error && (
         <div className="mb-6 p-3 bg-red-100 text-red-700 rounded-md text-sm">
           {error}
@@ -132,7 +124,7 @@ const RegisterForm: React.FC = () => {
         </div>
       )}
       
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
         <motion.div variants={itemVariants}>
           <Input
             label="Full Name"
@@ -205,12 +197,12 @@ const RegisterForm: React.FC = () => {
           />
         </motion.div>
         
-        <motion.div variants={itemVariants} className="pt-2">
+        <motion.div variants={itemVariants} className="pt-4">
           <Button
             type="submit"
             variant="primary"
             size="lg"
-            className="w-full"
+            className="w-full py-3 text-base"
             loading={loading}
             disabled={loading || isOffline}
           >
@@ -218,15 +210,6 @@ const RegisterForm: React.FC = () => {
           </Button>
         </motion.div>
       </form>
-      
-      <motion.div variants={itemVariants} className="mt-6 text-center">
-        <p className="text-gray-600">
-          Already have an account?{' '}
-          <a href="/login" className="text-primary-600 hover:text-primary-700 font-medium">
-            Sign In
-          </a>
-        </p>
-      </motion.div>
     </motion.div>
   );
 };

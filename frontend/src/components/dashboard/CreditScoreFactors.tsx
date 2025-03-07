@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   FiClock, 
   FiTrendingUp, 
@@ -9,7 +9,10 @@ import {
   FiActivity,
   FiInfo,
   FiChevronDown,
-  FiChevronUp
+  FiChevronUp,
+  FiArrowUp,
+  FiArrowDown,
+  FiHelpCircle
 } from 'react-icons/fi';
 import { IconComponent } from '../../utils/iconUtils';
 
@@ -27,7 +30,8 @@ const CreditScoreFactors: React.FC<CreditScoreFactorsProps> = ({
   creditScoreFactors,
   performanceScore
 }) => {
-  const [expanded, setExpanded] = React.useState(false);
+  const [expanded, setExpanded] = useState(false);
+  const [activeFactorTip, setActiveFactorTip] = useState<string | null>(null);
   
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'text-green-600';
@@ -62,6 +66,50 @@ const CreditScoreFactors: React.FC<CreditScoreFactorsProps> = ({
     accountAge: FiTrendingUp
   };
   
+  const factorImprovementTips = {
+    repaymentHistory: [
+      'Make all repayments on time or early',
+      'Never miss an auto-deduction payment',
+      'Consider making additional manual repayments',
+      'Set up payment reminders in your calendar'
+    ],
+    transactionVolume: [
+      'Increase your daily transaction count',
+      'Process larger transaction amounts',
+      'Maintain consistent transaction activity',
+      'Avoid long periods of inactivity'
+    ],
+    collateralRatio: [
+      'Increase your deposit/collateral amount',
+      'Maintain a healthy ratio between collateral and overdraft',
+      'Consider adding additional security deposits',
+      'Reduce your outstanding overdraft balance'
+    ],
+    accountAge: [
+      'Continue using the platform regularly',
+      'Your score will naturally improve over time',
+      'Maintain your account in good standing',
+      'Refer other agents to build your network'
+    ]
+  };
+  
+  const toggleFactorTip = (factor: string) => {
+    if (activeFactorTip === factor) {
+      setActiveFactorTip(null);
+    } else {
+      setActiveFactorTip(factor);
+    }
+  };
+  
+  const getScoreCategory = (score: number) => {
+    if (score >= 80) return { label: 'Excellent', color: 'text-green-600' };
+    if (score >= 60) return { label: 'Good', color: 'text-yellow-600' };
+    if (score >= 40) return { label: 'Fair', color: 'text-orange-600' };
+    return { label: 'Poor', color: 'text-red-600' };
+  };
+  
+  const scoreCategory = getScoreCategory(performanceScore);
+  
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
       <div 
@@ -75,9 +123,7 @@ const CreditScoreFactors: React.FC<CreditScoreFactorsProps> = ({
           <div className="ml-3">
             <h3 className="text-lg font-semibold text-gray-800">Credit Score</h3>
             <p className="text-sm text-gray-500">
-              {performanceScore >= 80 ? 'Excellent' : 
-               performanceScore >= 60 ? 'Good' : 
-               performanceScore >= 40 ? 'Fair' : 'Poor'}
+              {scoreCategory.label} <span className="text-xs">({performanceScore}/100)</span>
             </p>
           </div>
         </div>
@@ -102,53 +148,74 @@ const CreditScoreFactors: React.FC<CreditScoreFactorsProps> = ({
           </div>
           
           <div className="space-y-4">
-            {Object.entries(creditScoreFactors).map(([key, value]) => (
-              <div key={key} className="space-y-1">
+            {Object.entries(creditScoreFactors).map(([factor, score]) => (
+              <div key={factor} className="rounded-md border border-gray-200 p-3">
                 <div className="flex justify-between items-center">
                   <div className="flex items-center">
-                    <IconComponent 
-                      Icon={factorIcons[key as keyof typeof factorIcons]} 
-                      className={`h-4 w-4 mr-2 ${getScoreColor(value)}`} 
-                    />
-                    <span className="text-sm font-medium text-gray-700">
-                      {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
-                    </span>
+                    <div className={`p-2 rounded-full ${score >= 70 ? 'bg-green-100' : score >= 50 ? 'bg-yellow-100' : 'bg-red-100'}`}>
+                      <IconComponent 
+                        Icon={factorIcons[factor as keyof typeof factorIcons]} 
+                        className={`h-4 w-4 ${score >= 70 ? 'text-green-600' : score >= 50 ? 'text-yellow-600' : 'text-red-600'}`} 
+                      />
+                    </div>
+                    <div className="ml-3">
+                      <h4 className="text-sm font-medium text-gray-800 capitalize">
+                        {factor.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                        <span className="ml-1 text-xs text-gray-500">
+                          ({factorWeights[factor as keyof typeof factorWeights]}%)
+                        </span>
+                      </h4>
+                      <p className="text-xs text-gray-500">
+                        {factorDescriptions[factor as keyof typeof factorDescriptions]}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex items-center">
-                    <span className={`text-sm font-medium ${getScoreColor(value)}`}>
-                      {value}
-                    </span>
-                    <span className="text-xs text-gray-500 ml-1">
-                      ({factorWeights[key as keyof typeof factorWeights]}%)
-                    </span>
+                  <div className="flex flex-col items-end">
+                    <span className={`text-sm font-medium ${getScoreColor(score)}`}>{score}</span>
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleFactorTip(factor);
+                      }} 
+                      className="text-xs text-blue-600 hover:text-blue-800 flex items-center mt-1"
+                    >
+                      <IconComponent Icon={FiHelpCircle} className="h-3 w-3 mr-1" />
+                      Improve
+                    </button>
                   </div>
                 </div>
                 
-                <div className="w-full bg-gray-200 rounded-full h-1.5">
-                  <motion.div 
-                    className={`h-1.5 rounded-full ${getProgressColor(value)}`}
-                    style={{ width: `${value}%` }}
-                    initial={{ width: 0 }}
-                    animate={{ width: `${value}%` }}
-                    transition={{ duration: 0.8 }}
-                  ></motion.div>
-                </div>
-                
-                <p className="text-xs text-gray-500">
-                  {factorDescriptions[key as keyof typeof factorDescriptions]}
-                </p>
+                <AnimatePresence>
+                  {activeFactorTip === factor && (
+                    <motion.div 
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="mt-3 pt-3 border-t border-gray-200 overflow-hidden"
+                    >
+                      <h5 className="text-xs font-medium text-gray-700 mb-2">How to improve:</h5>
+                      <ul className="text-xs text-gray-600 space-y-1">
+                        {factorImprovementTips[factor as keyof typeof factorImprovementTips].map((tip, index) => (
+                          <li key={index} className="flex items-start">
+                            <IconComponent Icon={FiArrowUp} className="h-3 w-3 text-green-500 mt-0.5 mr-1 flex-shrink-0" />
+                            <span>{tip}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             ))}
           </div>
           
-          <div className="mt-4 p-3 bg-blue-50 rounded-md">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <IconComponent Icon={FiInfo} className="h-5 w-5 text-blue-500" />
-              </div>
-              <div className="ml-3">
-                <p className="text-sm text-blue-700">
-                  Increasing your performance score by 10 points can raise your overdraft limit by up to 10%.
+          <div className="mt-4 bg-blue-50 rounded-md p-3">
+            <div className="flex items-start">
+              <IconComponent Icon={FiInfo} className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
+              <div className="ml-2">
+                <p className="text-xs text-blue-800">
+                  <strong>Pro Tip:</strong> Your credit score is recalculated daily. Focusing on improving your repayment history (40%) and transaction volume (30%) will have the biggest impact on your score and overdraft limit.
                 </p>
               </div>
             </div>
@@ -159,11 +226,9 @@ const CreditScoreFactors: React.FC<CreditScoreFactorsProps> = ({
   );
 };
 
+// Container component to connect to Redux
 const CreditScoreFactorsContainer: React.FC = () => {
-  const { 
-    creditScoreFactors,
-    performanceScore
-  } = useSelector((state: RootState) => state.overdraft);
+  const { creditScoreFactors, performanceScore } = useSelector((state: RootState) => state.overdraft);
   
   return (
     <CreditScoreFactors

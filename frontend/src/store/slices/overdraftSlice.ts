@@ -7,6 +7,7 @@ export interface OverdraftTransaction {
   date: string;
   description: string;
   paymentMethod?: string;
+  status: 'pending' | 'completed' | 'failed';
 }
 
 export interface OverdraftState {
@@ -62,6 +63,7 @@ const initialState: OverdraftState = {
       amount: 75000,
       date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days ago
       description: 'Float liquidity overdraft',
+      status: 'completed'
     },
     {
       id: '2',
@@ -69,7 +71,8 @@ const initialState: OverdraftState = {
       amount: 25000,
       date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
       description: 'Manual repayment',
-      paymentMethod: 'mobile_money'
+      paymentMethod: 'mobile_money',
+      status: 'completed'
     }
   ],
   performanceScore: 85,
@@ -116,7 +119,8 @@ const overdraftSlice = createSlice({
         type: 'repayment',
         amount: action.payload,
         date: new Date().toISOString(),
-        description: 'Manual repayment'
+        description: 'Manual repayment',
+        status: 'pending'
       });
     },
     processTopUp: (state, action: PayloadAction<{ amount: number }>) => {
@@ -153,7 +157,8 @@ const overdraftSlice = createSlice({
           type: 'auto_deduction',
           amount: actualDeduction,
           date: new Date().toISOString(),
-          description: `Auto-deduction (${state.repaymentPercentage}% of top-up)`
+          description: `Auto-deduction (${state.repaymentPercentage}% of top-up)`,
+          status: 'pending'
         });
       }
       
@@ -233,7 +238,8 @@ const overdraftSlice = createSlice({
         type: 'collateral',
         amount: newCollateralAmount,
         date: new Date().toISOString(),
-        description: 'Collateral update'
+        description: 'Collateral update',
+        status: 'pending'
       });
     },
     requestOverdraft: (state, action: PayloadAction<number | { amount: number; reason: string }>) => {
@@ -255,7 +261,8 @@ const overdraftSlice = createSlice({
           date: new Date().toISOString(),
           description: typeof action.payload === 'object' && action.payload.reason 
             ? `Float liquidity overdraft: ${action.payload.reason}`
-            : 'Float liquidity overdraft'
+            : 'Float liquidity overdraft',
+          status: 'pending'
         });
       }
     }

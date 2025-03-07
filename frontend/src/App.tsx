@@ -5,7 +5,11 @@ import { useAuthState } from './hooks/useAuthState';
 import { checkNetworkStatus } from './store/slices/authSlice';
 import Dashboard from './pages/Dashboard';
 import FloatTopUp from './pages/FloatTopUp';
+import FloatManagement from './pages/FloatManagement';
+import Overdraft from './pages/Overdraft';
+import Transactions from './pages/Transactions';
 import Profile from './pages/Profile';
+import Settings from './pages/Settings';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Layout from './components/common/Layout';
@@ -113,8 +117,12 @@ const App: React.FC = () => {
         <Route element={<ProtectedRoute />}>
           <Route element={<Layout />}>
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/float" element={<FloatManagement />} />
             <Route path="/float-top-up" element={<FloatTopUp />} />
+            <Route path="/overdraft" element={<Overdraft />} />
+            <Route path="/transactions" element={<Transactions />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/settings" element={<Settings />} />
           </Route>
         </Route>
         

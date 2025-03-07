@@ -3,30 +3,20 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../store';
 import { motion } from 'framer-motion';
 import StatCard from '../components/dashboard/StatCard';
-import { TransactionList, Transaction } from '../components/dashboard/TransactionList';
 import FloatSummary from '../components/dashboard/FloatSummary';
-import OverdraftSummary from '../components/dashboard/OverdraftSummary';
 import RepaymentProgress from '../components/dashboard/RepaymentProgress';
 import CollateralSummary from '../components/dashboard/CollateralSummary';
-import FloatManagement from '../components/dashboard/FloatManagement';
 import NotificationCenter from '../components/dashboard/NotificationCenter';
 import PerformanceSettings from '../components/dashboard/PerformanceSettings';
 import CreditScoreFactors from '../components/dashboard/CreditScoreFactors';
 import NetworkStatus from '../components/ui/NetworkStatus';
 import Badge from '../components/ui/Badge';
-import { FiDollarSign, FiCreditCard, FiShield, FiArrowUp, FiArrowDown, FiCheckCircle, FiActivity, FiAlertCircle } from 'react-icons/fi';
+import { FiDollarSign, FiCreditCard, FiShield, FiArrowUp, FiArrowDown, FiCheckCircle, FiActivity, FiAlertCircle, FiTrendingUp, FiPlus } from 'react-icons/fi';
 import { IconComponent } from '../utils/iconUtils';
-
-// Update the Transaction interface to match our needs
-interface DashboardTransaction extends Omit<Transaction, 'date' | 'customer'> {
-  date: Date;
-  customer: {
-    name: string;
-    phone: string;
-  };
-}
+import { useNavigate } from 'react-router-dom';
 
 const Dashboard: React.FC = () => {
+  const navigate = useNavigate();
   const { user, isOffline } = useSelector((state: RootState) => state.auth);
   const { 
     overdraftBalance, 
@@ -46,115 +36,17 @@ const Dashboard: React.FC = () => {
   const [dashboardData, setDashboardData] = useState({
     floatBalance: 2500000,
     totalTransactions: 1567,
-    weeklyFloatData: [1800000, 2200000, 1950000, 2100000, 2300000, 2450000, 2500000],
-    recentTransactions: [] as DashboardTransaction[]
+    weeklyFloatData: [1800000, 2200000, 1950000, 2100000, 2300000, 2450000, 2500000]
   });
   
   useEffect(() => {
     // Simulate loading data
     const timer = setTimeout(() => {
-      // Mock transactions data
-      const mockTransactions: DashboardTransaction[] = [
-        {
-          id: 'tx1',
-          type: 'deposit',
-          amount: 250000,
-          status: 'completed',
-          date: new Date(Date.now() - 1000 * 60 * 30), // 30 minutes ago
-          customer: {
-            name: 'John Doe',
-            phone: '+255 765 432 100'
-          },
-          description: 'Cash deposit'
-        },
-        {
-          id: 'tx2',
-          type: 'withdrawal',
-          amount: 100000,
-          status: 'completed',
-          date: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
-          customer: {
-            name: 'Sarah Johnson',
-            phone: '+255 789 123 456'
-          },
-          description: 'Cash withdrawal'
-        },
-        {
-          id: 'tx3',
-          type: 'overdraft',
-          amount: 75000,
-          status: 'completed',
-          date: new Date(Date.now() - 1000 * 60 * 60 * 3), // 3 hours ago
-          customer: {
-            name: 'Agent Account',
-            phone: '+255 744 555 123'
-          },
-          description: 'Float liquidity overdraft'
-        },
-        {
-          id: 'tx4',
-          type: 'auto_deduction',
-          amount: 50000,
-          status: 'completed',
-          date: new Date(Date.now() - 1000 * 60 * 60 * 5), // 5 hours ago
-          customer: {
-            name: 'System',
-            phone: '-'
-          },
-          description: 'Auto-deduction from top-up'
-        },
-        {
-          id: 'tx5',
-          type: 'collateral',
-          amount: 300000,
-          status: 'completed',
-          date: new Date(Date.now() - 1000 * 60 * 60 * 8), // 8 hours ago
-          customer: {
-            name: 'Agent Account',
-            phone: '+255 755 987 321'
-          },
-          description: 'Collateral deposit'
-        }
-      ];
-      
-      setDashboardData(prev => ({
-        ...prev,
-        recentTransactions: mockTransactions
-      }));
-      
       setIsLoading(false);
     }, 1500);
     
     return () => clearTimeout(timer);
   }, []);
-  
-  // Helper function to render status badge
-  const renderStatusBadge = (status: string) => {
-    if (status === 'completed') {
-        return <Badge variant="success" label="Completed" icon={<IconComponent Icon={FiCheckCircle} />} />;
-    } else if (status === 'pending') {
-        return <Badge variant="warning" label="Pending" icon={<IconComponent Icon={FiActivity} />} />;
-    } else {
-        return <Badge variant="error" label="Failed" icon={<IconComponent Icon={FiAlertCircle} />} />;
-    }
-  };
-  
-  // Helper function to render transaction icon
-  const renderTransactionIcon = (type: string) => {
-    if (type === 'deposit') {
-        return <div className="p-2 bg-green-100 rounded-full"><IconComponent Icon={FiArrowDown} className="text-green-600" /></div>;
-    } else if (type === 'withdrawal') {
-        return <div className="p-2 bg-red-100 rounded-full"><IconComponent Icon={FiArrowUp} className="text-red-600" /></div>;
-    } else if (type === 'overdraft') {
-        return <div className="p-2 bg-blue-100 rounded-full"><IconComponent Icon={FiCreditCard} className="text-blue-600" /></div>;
-    } else if (type === 'auto_deduction') {
-        return <div className="p-2 bg-yellow-100 rounded-full"><IconComponent Icon={FiArrowUp} className="text-yellow-600" /></div>;
-    } else if (type === 'collateral') {
-        return <div className="p-2 bg-purple-100 rounded-full"><IconComponent Icon={FiShield} className="text-purple-600" /></div>;
-    } else {
-        return <div className="p-2 bg-gray-100 rounded-full"><IconComponent Icon={FiDollarSign} className="text-gray-600" /></div>;
-    }
-  };
   
   // Format currency
   const formatCurrency = (amount: number) => {
@@ -185,14 +77,15 @@ const Dashboard: React.FC = () => {
       transition: { duration: 0.3 }
     }
   };
+
+  // Handler for navigating to float management page
+  const handleFloatManagementClick = () => {
+    navigate('/float');
+  };
   
-  // Convert our DashboardTransaction to the format expected by TransactionList
-  const adaptTransactions = (transactions: DashboardTransaction[]): Transaction[] => {
-    return transactions.map(tx => ({
-      ...tx,
-      date: tx.date.toISOString(),
-      customer: tx.customer.name
-    }));
+  // Handler for navigating to float top-up page
+  const handleFloatTopUpClick = () => {
+    navigate('/float-top-up');
   };
   
   return (
@@ -209,7 +102,7 @@ const Dashboard: React.FC = () => {
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          className="space-y-6"
+          className="space-y-6 px-2 sm:px-0"
         >
           {isOffline && (
             <motion.div variants={itemVariants} className="mb-4">
@@ -227,14 +120,48 @@ const Dashboard: React.FC = () => {
               </div>
             </motion.div>
           )}
-          
-          {/* Notification Center */}
+
+          {/* Notification Center - Moved to the very top for highest visibility */}
           <motion.div variants={itemVariants}>
             <NotificationCenter />
           </motion.div>
+
+          {/* Value Proposition Banner */}
+          <motion.div variants={itemVariants} className="mb-2">
+            <div className="bg-gradient-to-r from-primary-50 to-blue-50 p-4 rounded-lg border border-primary-100 shadow-sm">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
+                <div className="flex items-center mb-4 sm:mb-0">
+                  <div className="p-3 bg-primary-100 rounded-full mr-4">
+                    <IconComponent Icon={FiTrendingUp} className="h-6 w-6 text-primary-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-semibold text-primary-800">Welcome to Smart Wakala</h2>
+                    <p className="text-sm text-gray-600">Never run out of float with our intelligent credit system</p>
+                  </div>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                  <button 
+                    onClick={handleFloatTopUpClick}
+                    className="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-md transition duration-150 ease-in-out flex items-center justify-center"
+                  >
+                    <IconComponent Icon={FiPlus} className="mr-2" />
+                    Top Up Float
+                  </button>
+                  <button 
+                    onClick={handleFloatManagementClick}
+                    className="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-md transition duration-150 ease-in-out flex items-center justify-center"
+                  >
+                    <IconComponent Icon={FiDollarSign} className="mr-2" />
+                    Manage Float
+                  </button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
           
+          {/* Key Stats Cards - Rearranged for better visual flow */}
           <motion.div variants={itemVariants}>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
               <StatCard
                 title="Float Balance"
                 value={formatCurrency(dashboardData.floatBalance)}
@@ -261,34 +188,25 @@ const Dashboard: React.FC = () => {
             </div>
           </motion.div>
           
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6">
             {/* Left column - 8/12 width on large screens */}
-            <motion.div variants={itemVariants} className="lg:col-span-8 space-y-6">
-              {/* First row - Float Management and Overdraft Summary */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FloatManagement />
-                <OverdraftSummary />
-              </div>
-              
+            <motion.div variants={itemVariants} className="lg:col-span-8 space-y-4 md:space-y-6">
               {/* Credit Score Factors */}
               <CreditScoreFactors />
               
-              {/* Transactions */}
-              <TransactionList 
-                transactions={adaptTransactions(dashboardData.recentTransactions)}
-                getStatusBadge={renderStatusBadge}
-                getTransactionIcon={renderTransactionIcon}
-                formatCurrency={formatCurrency}
-              />
+              {/* Repayment Progress */}
+              <RepaymentProgress />
             </motion.div>
             
             {/* Right column - 4/12 width on large screens */}
-            <motion.div variants={itemVariants} className="lg:col-span-4 space-y-6">
+            <motion.div variants={itemVariants} className="lg:col-span-4 space-y-4 md:space-y-6">
               {/* Performance Settings */}
               <PerformanceSettings />
               
+              {/* Collateral Summary */}
               <CollateralSummary />
-              <RepaymentProgress />
+              
+              {/* Float Summary */}
               <FloatSummary
                 floatBalance={dashboardData.floatBalance}
                 weeklyData={dashboardData.weeklyFloatData}
