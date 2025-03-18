@@ -20,12 +20,14 @@ import TestPage from './pages/TestPage';
 import TestFirebase from './pages/TestFirebase';
 import OfflineIndicator from './components/common/OfflineIndicator';
 import DesignSystem from './components/ui/DesignSystem';
+import LanguageWelcomeModal from './components/common/LanguageWelcomeModal';
 
 const App: React.FC = () => {
   const { user, loading, error } = useAuthState();
   const [firebaseInitialized, setFirebaseInitialized] = useState(false);
   const dispatch = useDispatch();
   const { t } = useTranslation();
+  const [showLanguageWelcome, setShowLanguageWelcome] = useState(false);
 
   // Add console logging to help debug
   console.log('App rendering, auth state:', { user, loading, error });
@@ -62,6 +64,14 @@ const App: React.FC = () => {
     };
     
     setFirebaseInitialized(checkFirebaseConfig());
+  }, []);
+
+  useEffect(() => {
+    // Check if the welcome modal has been shown before
+    const hasShownWelcome = localStorage.getItem('languageWelcomeShown') === 'true';
+    if (!hasShownWelcome) {
+      setShowLanguageWelcome(true);
+    }
   }, []);
 
   // Show loading screen while auth state is being determined
@@ -107,6 +117,12 @@ const App: React.FC = () => {
   return (
     <Suspense fallback={<LoadingScreen />}>
       <OfflineIndicator />
+      {showLanguageWelcome && (
+        <LanguageWelcomeModal onClose={() => {
+          setShowLanguageWelcome(false);
+          localStorage.setItem('languageWelcomeShown', 'true');
+        }} />
+      )}
       <Routes>
         {/* Public routes */}
         <Route path="/test" element={<TestPage />} />

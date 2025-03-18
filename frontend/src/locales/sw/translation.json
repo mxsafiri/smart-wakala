@@ -24,7 +24,10 @@
     "updating": "Inasasisha...",
     "saveChanges": "Hifadhi Mabadiliko",
     "offline": "Nje ya Mtandao",
-    "offlineMessage": "Uko nje ya mtandao kwa sasa. Baadhi ya huduma zinaweza kuwa na vikwazo."
+    "offlineMessage": "Uko nje ya mtandao kwa sasa. Baadhi ya huduma zinaweza kuwa na vikwazo.",
+    "continue": "Endelea",
+    "viewDetails": "Angalia Maelezo",
+    "close": "Funga"
   },
   "auth": {
     "login": "Ingia",
@@ -357,5 +360,11 @@
     "highPriority": "Kipaumbele cha Juu",
     "mediumPriority": "Kipaumbele cha Kati",
     "lowPriority": "Kipaumbele cha Chini"
+  },
+  "welcome": {
+    "selectLanguage": "Chagua Lugha Yako",
+    "choosePreferredLanguage": "Chagua lugha unayopendelea kwa Smart Wakala",
+    "welcomeToSmartWakala": "Karibu kwenye Smart Wakala",
+    "getStarted": "Anza Sasa"
   }
 }

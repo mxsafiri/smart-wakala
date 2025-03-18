@@ -24,7 +24,10 @@
     "offlineMessage": "You are currently offline. Some features may be limited.",
     "online": "You are online",
     "updating": "Updating...",
-    "saveChanges": "Save Changes"
+    "saveChanges": "Save Changes",
+    "continue": "Continue",
+    "viewDetails": "View Details",
+    "close": "Close"
   },
   "auth": {
     "login": "Login",
@@ -330,6 +333,12 @@
     "tiktok": "TikTok",
     "whatsapp": "WhatsApp",
     "telegram": "Telegram"
+  },
+  "welcome": {
+    "selectLanguage": "Select Your Language",
+    "choosePreferredLanguage": "Choose your preferred language for Smart Wakala",
+    "welcomeToSmartWakala": "Welcome to Smart Wakala",
+    "getStarted": "Get Started"
   },
   "notifications": {
     "notifications": "Notifications",
