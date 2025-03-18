@@ -181,26 +181,26 @@ const FloatTopUpForm: React.FC = () => {
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Payment Method
           </label>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div
-              className={`border rounded-md p-3 cursor-pointer transition-all duration-200 ${
+              className={`border rounded-md p-4 cursor-pointer transition-all duration-200 flex items-center ${
                 paymentMethod === 'mobile_money'
                   ? 'border-primary-500 bg-primary-50 shadow-sm'
                   : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50'
               }`}
               onClick={() => setPaymentMethod('mobile_money')}
             >
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between w-full">
                 <div className="flex items-center">
-                  <div className="bg-primary-100 rounded-full p-2">
+                  <div className="bg-primary-100 rounded-full p-2 flex-shrink-0">
                     <IconComponent Icon={FiSmartphone} className="h-5 w-5 text-primary-600" />
                   </div>
-                  <span className="ml-2 text-sm font-medium text-gray-700">
+                  <span className="ml-3 text-sm font-medium text-gray-700 whitespace-nowrap">
                     Mobile Money
                   </span>
                 </div>
                 {paymentMethod === 'mobile_money' && (
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary-600" viewBox="0 0 20 20" fill="currentColor">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary-600 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
                 )}
@@ -208,24 +208,24 @@ const FloatTopUpForm: React.FC = () => {
             </div>
             
             <div
-              className={`border rounded-md p-3 cursor-pointer transition-all duration-200 ${
+              className={`border rounded-md p-4 cursor-pointer transition-all duration-200 flex items-center ${
                 paymentMethod === 'bank_transfer'
                   ? 'border-primary-500 bg-primary-50 shadow-sm'
                   : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50'
               }`}
               onClick={() => setPaymentMethod('bank_transfer')}
             >
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between w-full">
                 <div className="flex items-center">
-                  <div className="bg-primary-100 rounded-full p-2">
+                  <div className="bg-primary-100 rounded-full p-2 flex-shrink-0">
                     <IconComponent Icon={FiCreditCard} className="h-5 w-5 text-primary-600" />
                   </div>
-                  <span className="ml-2 text-sm font-medium text-gray-700">
+                  <span className="ml-3 text-sm font-medium text-gray-700 whitespace-nowrap">
                     Bank Transfer
                   </span>
                 </div>
                 {paymentMethod === 'bank_transfer' && (
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary-600" viewBox="0 0 20 20" fill="currentColor">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary-600 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
                 )}
@@ -233,24 +233,24 @@ const FloatTopUpForm: React.FC = () => {
             </div>
             
             <div
-              className={`border rounded-md p-3 cursor-pointer transition-all duration-200 ${
+              className={`border rounded-md p-4 cursor-pointer transition-all duration-200 flex items-center ${
                 paymentMethod === 'cash'
                   ? 'border-primary-500 bg-primary-50 shadow-sm'
                   : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50'
               }`}
               onClick={() => setPaymentMethod('cash')}
             >
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between w-full">
                 <div className="flex items-center">
-                  <div className="bg-primary-100 rounded-full p-2">
+                  <div className="bg-primary-100 rounded-full p-2 flex-shrink-0">
                     <IconComponent Icon={FiDollarSign} className="h-5 w-5 text-primary-600" />
                   </div>
-                  <span className="ml-2 text-sm font-medium text-gray-700">
+                  <span className="ml-3 text-sm font-medium text-gray-700 whitespace-nowrap">
                     Cash
                   </span>
                 </div>
                 {paymentMethod === 'cash' && (
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary-600" viewBox="0 0 20 20" fill="currentColor">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary-600 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
                 )}

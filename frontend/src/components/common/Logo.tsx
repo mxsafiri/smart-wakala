@@ -75,61 +75,31 @@ const Logo: React.FC<LogoProps> = ({
           initial="initial"
           animate="animate"
           whileHover="hover"
-          className={`${sizeClasses[size]} bg-gradient-to-br from-primary-500 to-secondary-600 rounded-lg shadow-lg flex items-center justify-center overflow-hidden`}
+          className={`${sizeClasses[size]} bg-gradient-to-br from-primary-500 to-secondary-600 rounded-lg shadow-md flex items-center justify-center overflow-hidden`}
         >
-          <svg 
-            viewBox="0 0 24 24" 
-            fill="none" 
-            xmlns="http://www.w3.org/2000/svg" 
-            className="w-3/4 h-3/4 text-white"
-          >
-            {/* New simplified and iconic logo - stylized "W" with float/money element */}
-            <path 
-              d="M4 6C4 4.89543 4.89543 4 6 4H18C19.1046 4 20 4.89543 20 6V18C20 19.1046 19.1046 20 18 20H6C4.89543 20 4 19.1046 4 18V6Z" 
-              fill="rgba(255,255,255,0.15)"
-            />
-            <path 
-              d="M5 9L8 15L12 7L16 15L19 9" 
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <circle 
-              cx="12" 
-              cy="16" 
-              r="1.5" 
-              fill="currentColor"
-            />
-          </svg>
+          <div className="flex items-center justify-center relative">
+            <span className="text-white font-mono tracking-tighter" style={{ 
+              fontSize: size === 'sm' ? '1.1rem' : size === 'md' ? '1.4rem' : size === 'lg' ? '1.7rem' : '2.2rem',
+              fontWeight: '800',
+              letterSpacing: '-0.05em'
+            }}>
+              W
+            </span>
+            <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/4 w-3/5 h-0.5 bg-white opacity-70 rounded-full"></div>
+          </div>
         </motion.div>
       ) : (
-        <div className={`${sizeClasses[size]} bg-gradient-to-br from-primary-500 to-secondary-600 rounded-lg shadow-lg flex items-center justify-center overflow-hidden`}>
-          <svg 
-            viewBox="0 0 24 24" 
-            fill="none" 
-            xmlns="http://www.w3.org/2000/svg" 
-            className="w-3/4 h-3/4 text-white"
-          >
-            {/* New simplified and iconic logo - stylized "W" with float/money element */}
-            <path 
-              d="M4 6C4 4.89543 4.89543 4 6 4H18C19.1046 4 20 4.89543 20 6V18C20 19.1046 19.1046 20 18 20H6C4.89543 20 4 19.1046 4 18V6Z" 
-              fill="rgba(255,255,255,0.15)"
-            />
-            <path 
-              d="M5 9L8 15L12 7L16 15L19 9" 
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <circle 
-              cx="12" 
-              cy="16" 
-              r="1.5" 
-              fill="currentColor"
-            />
-          </svg>
+        <div className={`${sizeClasses[size]} bg-gradient-to-br from-primary-500 to-secondary-600 rounded-lg shadow-md flex items-center justify-center overflow-hidden`}>
+          <div className="flex items-center justify-center relative">
+            <span className="text-white font-mono tracking-tighter" style={{ 
+              fontSize: size === 'sm' ? '1.1rem' : size === 'md' ? '1.4rem' : size === 'lg' ? '1.7rem' : '2.2rem',
+              fontWeight: '800',
+              letterSpacing: '-0.05em'
+            }}>
+              W
+            </span>
+            <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/4 w-3/5 h-0.5 bg-white opacity-70 rounded-full"></div>
+          </div>
         </div>
       )}
 

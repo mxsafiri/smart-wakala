@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Wakala Logo Preview</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f5f5f5;
+        }
+        .logo-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        .logo-row {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+        }
+        .logo-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        .logo-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+        }
+        .bg-dark {
+            background-color: #333;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        h1 {
+            margin-bottom: 40px;
+            color: #333;
+        }
+        .gradient-text {
+            background: linear-gradient(to right, #3B82F6, #0EA5E9);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: transparent;
+        }
+    </style>
+</head>
+<body>
+    <h1>Smart Wakala Logo Preview</h1>
+    
+    <div class="logo-container">
+        <div class="logo-row">
+            <div class="logo-item">
+                <div class="logo-title">New Logo (SVG)</div>
+                <img src="./images/new/logo.svg" alt="New Smart Wakala Logo" width="100">
+            </div>
+            
+            <div class="logo-item">
+                <div class="logo-title">New Logo (Large)</div>
+                <img src="./images/new/logo.svg" alt="New Smart Wakala Logo" width="200">
+            </div>
+        </div>
+        
+        <div class="logo-row bg-dark">
+            <div class="logo-item">
+                <div class="logo-title" style="color: white;">On Dark Background</div>
+                <img src="./images/new/logo.svg" alt="New Smart Wakala Logo" width="100">
+            </div>
+        </div>
+        
+        <div class="logo-row">
+            <div class="logo-item">
+                <div class="logo-title">Component Preview</div>
+                <div style="width: 100px; height: 100px; background: linear-gradient(to bottom right, #3B82F6, #0EA5E9); border-radius: 16px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); position: relative;">
+                    <div style="position: relative; display: flex; flex-direction: column; align-items: center;">
+                        <div style="display: flex; align-items: center;">
+                            <span style="color: white; font-weight: bold; font-family: monospace; font-size: 28px; letter-spacing: -0.05em;">W</span>
+                        </div>
+                        <div style="position: absolute; bottom: -8px; width: 60%; height: 2px; background-color: white; opacity: 0.7; border-radius: 1px;"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="logo-item">
+                <div class="logo-title">With Text</div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 50px; height: 50px; background: linear-gradient(to bottom right, #3B82F6, #0EA5E9); border-radius: 10px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); position: relative;">
+                        <div style="position: relative; display: flex; flex-direction: column; align-items: center;">
+                            <div style="display: flex; align-items: center;">
+                                <span style="color: white; font-weight: bold; font-family: monospace; font-size: 16px; letter-spacing: -0.05em;">W</span>
+                            </div>
+                            <div style="position: absolute; bottom: -5px; width: 60%; height: 1px; background-color: white; opacity: 0.7; border-radius: 1px;"></div>
+                        </div>
+                    </div>
+                    <span class="gradient-text" style="font-weight: bold; font-size: 24px;">Smart Wakala</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <p>The new logo uses a simple 2D design with just the "W" letter in a gradient background for a clean, minimal look.</p>
+    
+    <div style="margin-top: 40px; text-align: center;">
+        <a href="./images/new/logo.svg" download="smart-wakala-logo.svg" style="display: inline-block; padding: 10px 20px; background: linear-gradient(to right, #3B82F6, #0EA5E9); color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">
+            Download SVG Logo
+        </a>
+        <a href="./favicon.svg" download="smart-wakala-favicon.svg" style="display: inline-block; margin-left: 20px; padding: 10px 20px; background: linear-gradient(to right, #3B82F6, #0EA5E9); color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">
+            Download Favicon
+        </a>
+    </div>
+</body>
+</html>

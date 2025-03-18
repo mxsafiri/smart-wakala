@@ -34,6 +34,8 @@ declare module 'react-icons/fi' {
   export const FiDollarSign: IconType;
   export const FiEye: IconType;
   export const FiEyeOff: IconType;
+  export const FiGlobe: IconType;
+  export const FiHelpCircle: IconType;
   export const FiLock: IconType;
   export const FiMail: IconType;
   export const FiMenu: IconType;

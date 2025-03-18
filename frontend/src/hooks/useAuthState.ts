@@ -7,13 +7,13 @@ import { setUser, setLoading, setError, setNetworkStatus } from '../store/slices
 import { UserProfile } from '../store/slices/authSlice';
 
 // Maximum number of retries for Firestore operations
-const MAX_RETRIES = 3;
-// Delay between retries in milliseconds
-const RETRY_DELAY = 1000;
-// Timeout for auth state resolution (ms) - increased from 8s to 15s
+const MAX_RETRIES = 5;
+// Base delay between retries in milliseconds (will be used for exponential backoff)
+const BASE_RETRY_DELAY = 1000;
+// Timeout for auth state resolution (ms)
 const AUTH_TIMEOUT = 15000;
 // Firestore operation timeout (ms)
-const FIRESTORE_TIMEOUT = 5000;
+const FIRESTORE_TIMEOUT = 10000;
 
 export const useAuthState = () => {
   const [user, setLocalUser] = useState<UserProfile | null>(null);
@@ -58,16 +58,42 @@ export const useAuthState = () => {
       }, FIRESTORE_TIMEOUT);
 
       try {
-        const userDoc = await getDoc(doc(db, 'users', uid));
+        console.log(`Attempting to fetch user data for UID: ${uid} (Attempt ${retryCount + 1}/${MAX_RETRIES + 1})`);
+        
+        // Check if Firestore is initialized properly
+        if (!db || typeof db.type === 'undefined') {
+          console.error('Firestore not properly initialized');
+          clearTimeout(timeoutId);
+          reject(new Error('Firestore not properly initialized'));
+          return;
+        }
+        
+        const userDocRef = doc(db, 'users', uid);
+        const userDoc = await getDoc(userDocRef);
+        
         clearTimeout(timeoutId);
+        console.log(`Successfully fetched user data for UID: ${uid}`);
         resolve(userDoc);
       } catch (error: any) {
         clearTimeout(timeoutId);
         
+        // Log detailed error information
+        console.error(`Error fetching user data from Firestore:`, {
+          error: error,
+          code: error.code,
+          message: error.message,
+          stack: error.stack,
+          uid: uid,
+          retryCount: retryCount
+        });
+        
         if (retryCount < MAX_RETRIES && navigator.onLine) {
+          // Calculate exponential backoff delay
+          const delay = BASE_RETRY_DELAY * Math.pow(2, retryCount);
+          
           // Only retry if we're online and haven't exceeded max retries
-          console.log(`Retrying Firestore fetch (${retryCount + 1}/${MAX_RETRIES})...`);
-          await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+          console.log(`Retrying Firestore fetch in ${delay}ms (${retryCount + 1}/${MAX_RETRIES})...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
           try {
             const result = await getUserDataFromFirestore(uid, retryCount + 1);
             resolve(result);
@@ -76,6 +102,7 @@ export const useAuthState = () => {
           }
         } else {
           // If we're offline or have exceeded retries, reject with the error
+          console.warn('Max retries exceeded or device offline, giving up on Firestore fetch');
           reject(error);
         }
       }

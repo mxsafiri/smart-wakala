@@ -10,7 +10,9 @@ import {
   persistentLocalCache,
   persistentMultipleTabManager,
   disableNetwork,
-  enableNetwork
+  enableNetwork,
+  doc,
+  getDoc
 } from 'firebase/firestore';
 import { getStorage, connectStorageEmulator, FirebaseStorage } from 'firebase/storage';
 
@@ -122,25 +124,47 @@ try {
         })
       });
       console.log('Firestore initialized with multi-tab persistence');
+      
+      // Verify Firestore connection
+      getDoc(doc(db, '__healthcheck__', 'connection'))
+        .then(() => {
+          console.log('Firestore connection verified successfully');
+        })
+        .catch(err => {
+          console.warn('Firestore connection check failed, but initialization completed:', err);
+        });
     } catch (err) {
       console.warn('Failed to initialize with multi-tab persistence, falling back to standard initialization:', err);
       // Fall back to standard initialization
-      db = getFirestore(firebaseApp);
-      
-      // Try to enable persistence separately
-      enableIndexedDbPersistence(db)
-        .then(() => {
-          console.log('Firestore persistence enabled successfully');
-        })
-        .catch((err) => {
-          if (err.code === 'failed-precondition') {
-            console.warn('Firestore persistence failed: Multiple tabs open. This is not critical.');
-          } else if (err.code === 'unimplemented') {
-            console.warn('Firestore persistence is not available in this browser. Using online-only mode.');
-          } else {
-            console.error('Error enabling persistence:', err);
-          }
-        });
+      try {
+        db = getFirestore(firebaseApp);
+        console.log('Firestore initialized with standard configuration');
+        
+        // Try to enable persistence separately
+        enableIndexedDbPersistence(db)
+          .then(() => {
+            console.log('Firestore persistence enabled successfully');
+          })
+          .catch((err) => {
+            if (err.code === 'failed-precondition') {
+              console.warn('Firestore persistence failed: Multiple tabs open. This is not critical.');
+            } else if (err.code === 'unimplemented') {
+              console.warn('Firestore persistence is not available in this browser. Using online-only mode.');
+            } else {
+              console.error('Error enabling persistence:', err);
+            }
+          });
+      } catch (fallbackError) {
+        console.error('Even standard Firestore initialization failed:', fallbackError);
+        // Create a more robust fallback
+        try {
+          console.log('Attempting last-resort Firestore initialization without any special options');
+          db = getFirestore();
+        } catch (lastResortError) {
+          console.error('All Firestore initialization attempts failed:', lastResortError);
+          db = {} as Firestore;
+        }
+      }
     }
   } else {
     console.warn('IndexedDB not available or not in browser environment, using standard Firestore without persistence');

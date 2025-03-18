@@ -30,8 +30,9 @@ const StatCard: React.FC<StatCardProps> = ({
     <motion.div
       whileHover={{ y: -4 }}
       transition={{ type: 'spring', stiffness: 300 }}
-      className={`card overflow-hidden ${className}`}
+      className={`card overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 ${className}`}
       onClick={onClick}
+      style={{ cursor: onClick ? 'pointer' : 'default' }}
     >
       <div className="flex items-start justify-between">
         <div>
@@ -53,7 +54,7 @@ const StatCard: React.FC<StatCardProps> = ({
       {change !== undefined && !isLoading && (
         <div className="mt-4">
           <div className={`flex items-center text-sm ${
-            isPositive ? 'text-green-600' : isNegative ? 'text-red-600' : 'text-gray-600'
+            isPositive ? 'financial-status-positive' : isNegative ? 'financial-status-negative' : 'text-gray-600'
           }`}>
             {isPositive ? (
               <Icon 
