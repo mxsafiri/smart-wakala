@@ -20,10 +20,11 @@
     "all": "Zote",
     "none": "Hakuna",
     "noData": "Hakuna data inayopatikana",
-    "offline": "Kwa sasa uko nje ya mtandao",
     "online": "Uko kwenye mtandao",
     "updating": "Inasasisha...",
-    "saveChanges": "Hifadhi Mabadiliko"
+    "saveChanges": "Hifadhi Mabadiliko",
+    "offline": "Nje ya Mtandao",
+    "offlineMessage": "Uko nje ya mtandao kwa sasa. Baadhi ya huduma zinaweza kuwa na vikwazo."
   },
   "auth": {
     "login": "Ingia",

@@ -46,7 +46,14 @@ const NotificationCenter: React.FC = () => {
   const { t } = useTranslation();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [expanded, setExpanded] = useState(false);
+  const [showAll, setShowAll] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  
+  // Cast t to our custom type to avoid TypeScript errors
+  const translate = t as { 
+    (key: string): string;
+    (key: string, options: Record<string, any>): string;
+  };
   
   // Generate notifications based on current state
   useEffect(() => {
@@ -63,14 +70,14 @@ const NotificationCenter: React.FC = () => {
         newNotifications.push({
           id: 'payment_due',
           type: 'payment_due',
-          title: t('notifications.upcomingPaymentDue'),
-          message: t('notifications.paymentDueMessage', { amount: formatCurrency(currentBalance), days: diffDays }),
+          title: translate('notifications.upcomingPaymentDue'),
+          message: translate('notifications.paymentDueMessage', { amount: formatCurrency(currentBalance), days: diffDays }),
           date: new Date().toISOString(),
           read: false,
           priority: diffDays <= 2 ? 'high' : 'medium',
           actionable: true,
           action: {
-            label: t('common.viewDetails'),
+            label: translate('common.viewDetails'),
             onClick: () => console.log('Navigate to payment details')
           }
         });
@@ -85,14 +92,14 @@ const NotificationCenter: React.FC = () => {
         newNotifications.push({
           id: 'overdraft_limit',
           type: 'overdraft_limit',
-          title: t('notifications.overdraftLimitAlert'),
-          message: t('notifications.overdraftLimitMessage', { percentage: usedPercentage }),
+          title: translate('notifications.overdraftLimitAlert'),
+          message: translate('notifications.overdraftLimitMessage', { percentage: usedPercentage }),
           date: new Date().toISOString(),
           read: false,
           priority: usedPercentage >= 90 ? 'high' : 'medium',
           actionable: true,
           action: {
-            label: t('notifications.addCollateral'),
+            label: translate('notifications.addCollateral'),
             onClick: () => console.log('Navigate to add collateral')
           }
         });
@@ -104,15 +111,15 @@ const NotificationCenter: React.FC = () => {
       newNotifications.push({
         id: 'performance_update',
         type: 'performance_update',
-        title: 'Performance Score Alert',
-        message: `Your performance score is ${performanceScore}. This may affect your overdraft limit.`,
+        title: translate('notifications.performanceAlert'),
+        message: translate('notifications.performanceMessage', { score: performanceScore }),
         date: new Date().toISOString(),
         read: false,
         priority: performanceScore < 40 ? 'high' : 'medium',
         actionable: true,
         action: {
-          label: 'View Performance',
-          onClick: () => console.log('Navigate to performance settings')
+          label: translate('notifications.improvePerformance'),
+          onClick: () => console.log('Navigate to performance tips')
         }
       });
     }

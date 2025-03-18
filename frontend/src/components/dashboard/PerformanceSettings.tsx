@@ -51,6 +51,13 @@ const PerformanceSettings: React.FC<PerformanceSettingsProps> = ({
 }) => {
   const dispatch = useDispatch();
   const { t } = useTranslation();
+  
+  // Cast t to our custom type to avoid TypeScript errors
+  const translate = t as { 
+    (key: string): string;
+    (key: string, options: Record<string, any>): string;
+  };
+  
   const [localPercentage, setLocalPercentage] = useState(repaymentPercentage);
   const [localScore, setLocalScore] = useState(performanceScore);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -58,6 +65,9 @@ const PerformanceSettings: React.FC<PerformanceSettingsProps> = ({
   const [isAssessing, setIsAssessing] = useState(false);
   const [aiRecommendation, setAiRecommendation] = useState<string | null>(null);
   const [aiError, setAiError] = useState<string | null>(null);
+  
+  // Get transactions data from Redux store
+  const transactions = useSelector((state: RootState) => state.float.transactions);
   
   // Calculate recommended percentage based on performance score
   const recommendedPercentage = Math.max(5, Math.min(20, Math.round(20 - (performanceScore / 10))));
@@ -109,7 +119,7 @@ const PerformanceSettings: React.FC<PerformanceSettingsProps> = ({
               role: 'user',
               content: `
                 Based on the following transaction data for a mobile money agent:
-                ${JSON.stringify(useSelector((state: RootState) => state.float.transactions).slice(0, 20).map((tx: FloatTransaction) => ({
+                ${JSON.stringify(transactions.slice(0, 20).map((tx: FloatTransaction) => ({
                   amount: tx.amount,
                   type: tx.type,
                   timestamp: tx.timestamp,
@@ -186,10 +196,10 @@ const PerformanceSettings: React.FC<PerformanceSettingsProps> = ({
   
   // Get message based on performance score
   const getScoreMessage = () => {
-    if (performanceScore >= 80) return t('performance.excellent');
-    if (performanceScore >= 60) return t('performance.good');
-    if (performanceScore >= 40) return t('performance.fair');
-    return t('performance.poor');
+    if (performanceScore >= 80) return translate('performance.excellent');
+    if (performanceScore >= 60) return translate('performance.good');
+    if (performanceScore >= 40) return translate('performance.fair');
+    return translate('performance.poor');
   };
   
   return (
@@ -197,7 +207,7 @@ const PerformanceSettings: React.FC<PerformanceSettingsProps> = ({
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center">
           <IconComponent Icon={FiSliders} className="text-primary-500 mr-2" />
-          <h3 className="card-title">{t('performance.performanceSettings')}</h3>
+          <h3 className="card-title">{translate('performance.performanceSettings')}</h3>
         </div>
         
         <div className="flex items-center">
@@ -217,14 +227,14 @@ const PerformanceSettings: React.FC<PerformanceSettingsProps> = ({
           className="mb-4 p-3 bg-success-50 border border-success-200 rounded-md flex items-center"
         >
           <IconComponent Icon={FiCheckCircle} className="text-success-500 mr-2" />
-          <span className="text-sm text-success-800">{t('performance.settingsUpdatedSuccessfully')}</span>
+          <span className="text-sm text-success-800">{translate('performance.settingsUpdatedSuccessfully')}</span>
         </motion.div>
       )}
       
       <div className="mb-6">
         <div className="flex items-center justify-between mb-2">
           <label htmlFor="repaymentPercentage" className="text-sm font-medium text-gray-700">
-            {t('performance.autoDeductionPercentage')}
+            {translate('performance.autoDeductionPercentage')}
           </label>
           <span className="text-sm text-primary-600 font-medium">
             {localPercentage}%
@@ -253,7 +263,7 @@ const PerformanceSettings: React.FC<PerformanceSettingsProps> = ({
         
         <div className="flex items-center justify-between mb-2 mt-4">
           <label htmlFor="performanceScore" className="text-sm font-medium text-gray-700">
-            {t('performance.performanceScore')}
+            {translate('performance.performanceScore')}
           </label>
           <span className="text-sm text-primary-600 font-medium">
             {localScore}%
@@ -291,10 +301,10 @@ const PerformanceSettings: React.FC<PerformanceSettingsProps> = ({
                   <span className="animate-spin mr-2">
                     <IconComponent Icon={FiRefreshCw} className="h-4 w-4" />
                   </span>
-                  {t('common.updating')}
+                  {translate('common.updating')}
                 </>
               ) : (
-                t('common.saveChanges')
+                translate('common.saveChanges')
               )}
             </button>
           </div>
@@ -304,12 +314,12 @@ const PerformanceSettings: React.FC<PerformanceSettingsProps> = ({
       <div className="border-t border-gray-200 pt-4">
         <div className="flex items-center mb-3">
           <IconComponent Icon={FiTrendingUp} className="text-primary-500 mr-2" />
-          <h4 className="text-sm font-medium text-gray-800">{t('performance.aiRecommendations')}</h4>
+          <h4 className="text-sm font-medium text-gray-800">{translate('performance.aiRecommendations')}</h4>
         </div>
         
         <div className="bg-gray-50 p-3 rounded-md mb-3">
           <p className="text-sm text-gray-600 mb-2">
-            {t('performance.recommendationText', { percentage: recommendedPercentage })}
+            {translate('performance.recommendationText', { percentage: recommendedPercentage })}
           </p>
           
           {recommendedPercentage !== localPercentage && (
@@ -317,14 +327,14 @@ const PerformanceSettings: React.FC<PerformanceSettingsProps> = ({
               onClick={() => setLocalPercentage(recommendedPercentage)}
               className="text-sm text-primary-600 hover:text-primary-800 font-medium"
             >
-              {t('performance.applyRecommendation')}
+              {translate('performance.applyRecommendation')}
             </button>
           )}
         </div>
         
         <div className="flex justify-between items-center">
           <div className="text-xs text-gray-500">
-            {t('performance.lastAssessment')}: {new Date().toLocaleDateString()}
+            {translate('performance.lastAssessment')}: {new Date().toLocaleDateString()}
           </div>
           
           <button
@@ -337,12 +347,12 @@ const PerformanceSettings: React.FC<PerformanceSettingsProps> = ({
                 <span className="animate-spin mr-2">
                   <IconComponent Icon={FiRefreshCw} className="h-4 w-4" />
                 </span>
-                {t('performance.assessing')}
+                {translate('performance.assessing')}
               </>
             ) : (
               <>
                 <IconComponent Icon={FiRefreshCw} className="mr-1" />
-                {t('performance.reassessNow')}
+                {translate('performance.reassessNow')}
               </>
             )}
           </button>
@@ -354,7 +364,7 @@ const PerformanceSettings: React.FC<PerformanceSettingsProps> = ({
             animate={{ opacity: 1, y: 0 }}
             className="mt-4 p-3 bg-purple-50 border border-purple-100 rounded-md"
           >
-            <h4 className="text-sm font-semibold text-purple-800 mb-2">{t('performance.aiRecommendation')}</h4>
+            <h4 className="text-sm font-semibold text-purple-800 mb-2">{translate('performance.aiRecommendation')}</h4>
             <div className="text-sm text-gray-700 whitespace-pre-line">
               {aiRecommendation}
             </div>

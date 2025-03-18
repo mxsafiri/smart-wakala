@@ -20,7 +20,8 @@
     "all": "All",
     "none": "None",
     "noData": "No data available",
-    "offline": "You are currently in offline mode",
+    "offline": "Offline",
+    "offlineMessage": "You are currently offline. Some features may be limited.",
     "online": "You are online",
     "updating": "Updating...",
     "saveChanges": "Save Changes"

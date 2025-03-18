@@ -35,6 +35,9 @@ const CreditScoreFactors: React.FC<CreditScoreFactorsProps> = ({
   const [activeFactorTip, setActiveFactorTip] = useState<string | null>(null);
   const { t } = useTranslation();
   
+  // Cast t to our custom type to avoid TypeScript errors
+  const translate = t as { (key: string): string };
+  
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'text-green-600';
     if (score >= 60) return 'text-yellow-600';
@@ -48,10 +51,10 @@ const CreditScoreFactors: React.FC<CreditScoreFactorsProps> = ({
   };
   
   const factorDescriptions = {
-    repaymentHistory: t('overdraft.repaymentHistoryDescription'),
-    transactionVolume: t('overdraft.transactionVolumeDescription'),
-    collateralRatio: t('overdraft.collateralRatioDescription'),
-    accountAge: t('overdraft.accountAgeDescription')
+    repaymentHistory: translate('overdraft.repaymentHistoryDescription'),
+    transactionVolume: translate('overdraft.transactionVolumeDescription'),
+    collateralRatio: translate('overdraft.collateralRatioDescription'),
+    accountAge: translate('overdraft.accountAgeDescription')
   };
   
   const factorWeights = {

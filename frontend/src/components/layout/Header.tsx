@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store';
@@ -17,6 +17,12 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useSelector((state: RootState) => state.auth);
   const { t } = useTranslation();
+  
+  // Cast t to our custom type to avoid TypeScript errors
+  const translate = t as { 
+    (key: string): string;
+    (key: string, options: Record<string, any>): string;
+  };
 
   const handleLogout = async () => {
     await dispatch(logoutUser() as any);
@@ -64,7 +70,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
               <div className="flex items-center space-x-4">
                 <LanguageSwitcher className="mr-2" />
                 <div className="text-sm hidden sm:block">
-                  <span className="text-gray-500">{t('dashboard.welcomeBack', { name: '' })}</span>
+                  <span className="text-gray-500">{translate('dashboard.welcomeBack', { name: '' })}</span>
                   <span className="ml-1 font-medium text-gray-900">{user?.fullName}</span>
                 </div>
                 
@@ -80,16 +86,16 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
                   
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 hidden group-hover:block">
                     <Link to="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                      {t('settings.profile')}
+                      {translate('settings.profile')}
                     </Link>
                     <Link to="/settings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                      {t('settings.settings')}
+                      {translate('settings.settings')}
                     </Link>
                     <button
                       onClick={handleLogout}
                       className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     >
-                      {t('auth.logout')}
+                      {translate('auth.logout')}
                     </button>
                   </div>
                 </div>
@@ -99,12 +105,12 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
                 <LanguageSwitcher className="mr-2" />
                 <Link to="/login">
                   <Button variant="outline" size="sm">
-                    {t('auth.login')}
+                    {translate('auth.login')}
                   </Button>
                 </Link>
                 <Link to="/register" className="hidden sm:block">
                   <Button variant="primary" size="sm">
-                    {t('auth.register')}
+                    {translate('auth.register')}
                   </Button>
                 </Link>
               </div>

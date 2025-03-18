@@ -20,6 +20,13 @@ const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const { user, isOffline } = useSelector((state: RootState) => state.auth);
   const { t } = useTranslation();
+  
+  // Cast t to our custom type to avoid TypeScript errors
+  const translate = t as { 
+    (key: string): string;
+    (key: string, options: Record<string, any>): string;
+  };
+  
   const { 
     overdraftBalance, 
     overdraftLimit, 
@@ -115,7 +122,7 @@ const Dashboard: React.FC = () => {
                   </div>
                   <div className="ml-3">
                     <p className="text-sm text-yellow-700">
-                      {t('common.offline')}. {t('dashboard.offlineModeLimited')}
+                      {translate('common.offline')}. {translate('dashboard.offlineModeLimited')}
                     </p>
                   </div>
                 </div>
@@ -137,8 +144,8 @@ const Dashboard: React.FC = () => {
                     <IconComponent Icon={FiTrendingUp} className="h-6 w-6 text-primary-600" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-semibold text-primary-800">{t('dashboard.welcomeToSmartWakala')}</h2>
-                    <p className="text-sm text-gray-600">{t('dashboard.neverRunOutOfFloat')}</p>
+                    <h2 className="text-lg font-semibold text-primary-800">{translate('dashboard.welcomeToSmartWakala')}</h2>
+                    <p className="text-sm text-gray-600">{translate('dashboard.neverRunOutOfFloat')}</p>
                   </div>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
@@ -147,14 +154,14 @@ const Dashboard: React.FC = () => {
                     className="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-md transition duration-150 ease-in-out flex items-center justify-center"
                   >
                     <IconComponent Icon={FiPlus} className="mr-2" />
-                    {t('dashboard.topUpFloat')}
+                    {translate('dashboard.topUpFloat')}
                   </button>
                   <button 
                     onClick={handleFloatManagementClick}
                     className="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-md transition duration-150 ease-in-out flex items-center justify-center"
                   >
                     <IconComponent Icon={FiDollarSign} className="mr-2" />
-                    {t('dashboard.manageFloat')}
+                    {translate('dashboard.manageFloat')}
                   </button>
                 </div>
               </div>
