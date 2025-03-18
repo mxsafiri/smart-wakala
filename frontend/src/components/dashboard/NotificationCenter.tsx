@@ -14,6 +14,7 @@ import {
 } from 'react-icons/fi';
 import { IconComponent } from '../../utils/iconUtils';
 import { formatCurrency } from '../../utils/formatters';
+import { useTranslation } from 'react-i18next';
 
 interface Notification {
   id: string;
@@ -42,6 +43,7 @@ const NotificationCenter: React.FC = () => {
     isOffline
   } = useSelector((state: RootState) => state.overdraft);
   
+  const { t } = useTranslation();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [expanded, setExpanded] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -61,14 +63,14 @@ const NotificationCenter: React.FC = () => {
         newNotifications.push({
           id: 'payment_due',
           type: 'payment_due',
-          title: 'Upcoming Payment Due',
-          message: `You have a payment of ${formatCurrency(currentBalance)} due in ${diffDays} days.`,
+          title: t('notifications.upcomingPaymentDue'),
+          message: t('notifications.paymentDueMessage', { amount: formatCurrency(currentBalance), days: diffDays }),
           date: new Date().toISOString(),
           read: false,
           priority: diffDays <= 2 ? 'high' : 'medium',
           actionable: true,
           action: {
-            label: 'View Details',
+            label: t('common.viewDetails'),
             onClick: () => console.log('Navigate to payment details')
           }
         });
@@ -83,14 +85,14 @@ const NotificationCenter: React.FC = () => {
         newNotifications.push({
           id: 'overdraft_limit',
           type: 'overdraft_limit',
-          title: 'Overdraft Limit Alert',
-          message: `You've used ${usedPercentage}% of your overdraft limit. Consider adding more collateral.`,
+          title: t('notifications.overdraftLimitAlert'),
+          message: t('notifications.overdraftLimitMessage', { percentage: usedPercentage }),
           date: new Date().toISOString(),
           read: false,
           priority: usedPercentage >= 90 ? 'high' : 'medium',
           actionable: true,
           action: {
-            label: 'Add Collateral',
+            label: t('notifications.addCollateral'),
             onClick: () => console.log('Navigate to add collateral')
           }
         });
@@ -102,8 +104,8 @@ const NotificationCenter: React.FC = () => {
       newNotifications.push({
         id: 'performance_update',
         type: 'performance_update',
-        title: 'Low Performance Score',
-        message: `Your current performance score is ${performanceScore}%. Improving this can increase your overdraft limit.`,
+        title: 'Performance Score Alert',
+        message: `Your performance score is ${performanceScore}. This may affect your overdraft limit.`,
         date: new Date().toISOString(),
         read: false,
         priority: performanceScore < 40 ? 'high' : 'medium',
@@ -115,36 +117,29 @@ const NotificationCenter: React.FC = () => {
       });
     }
     
-    // Collateral notification
-    if (collateralAmount === 0) {
+    // Collateral update notification
+    if (collateralAmount < overdraftUsed * 0.5) {
       newNotifications.push({
         id: 'collateral_update',
         type: 'collateral_update',
-        title: 'No Collateral Added',
-        message: 'You haven\'t added any collateral yet. Add collateral to increase your overdraft limit.',
+        title: 'Collateral Warning',
+        message: `Your collateral is below the recommended amount. Current ratio: ${Math.round((collateralAmount / overdraftUsed) * 100)}%.`,
         date: new Date().toISOString(),
         read: false,
-        priority: 'medium',
+        priority: 'high',
         actionable: true,
         action: {
-          label: 'Add Collateral',
-          onClick: () => console.log('Navigate to add collateral')
+          label: 'Update Collateral',
+          onClick: () => console.log('Navigate to collateral management')
         }
       });
     }
     
     setNotifications(newNotifications);
     setUnreadCount(newNotifications.filter(n => !n.read).length);
-  }, [
-    overdraftLimit, 
-    overdraftUsed, 
-    currentBalance, 
-    repaymentDueDate,
-    performanceScore,
-    collateralAmount,
-    repaymentPercentage
-  ]);
+  }, [overdraftLimit, overdraftUsed, currentBalance, repaymentDueDate, performanceScore, collateralAmount, repaymentPercentage]);
   
+  // Mark a notification as read
   const markAsRead = (id: string) => {
     setNotifications(prev => 
       prev.map(notification => 
@@ -156,62 +151,88 @@ const NotificationCenter: React.FC = () => {
     setUnreadCount(prev => Math.max(0, prev - 1));
   };
   
-  const markAllAsRead = () => {
-    setNotifications(prev => 
-      prev.map(notification => ({ ...notification, read: true }))
-    );
-    setUnreadCount(0);
+  // Dismiss a notification
+  const dismissNotification = (id: string) => {
+    setNotifications(prev => prev.filter(notification => notification.id !== id));
+    setUnreadCount(prev => Math.max(0, prev - 1));
   };
   
-  const getIconForType = (type: string) => {
+  // Toggle expanded state
+  const toggleExpanded = () => {
+    setExpanded(prev => !prev);
+  };
+  
+  // Get icon for notification type
+  const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'payment_due':
-        return FiCalendar;
+        return <IconComponent Icon={FiCalendar} className="text-primary-500" />;
       case 'overdraft_limit':
-        return FiCreditCard;
+        return <IconComponent Icon={FiCreditCard} className="text-warning-500" />;
       case 'collateral_update':
-        return FiDollarSign;
+        return <IconComponent Icon={FiDollarSign} className="text-danger-500" />;
       case 'performance_update':
-        return FiAlertCircle;
+        return <IconComponent Icon={FiAlertCircle} className="text-accent-500" />;
       default:
-        return FiBell;
+        return <IconComponent Icon={FiBell} className="text-gray-500" />;
     }
   };
   
-  const getPriorityColor = (priority: string) => {
+  // Get background color based on priority
+  const getBackgroundColor = (priority: string) => {
     switch (priority) {
       case 'high':
-        return 'text-red-500 bg-red-100';
+        return 'bg-danger-50 border-l-4 border-danger-500';
       case 'medium':
-        return 'text-yellow-500 bg-yellow-100';
+        return 'bg-warning-50 border-l-4 border-warning-500';
       case 'low':
-        return 'text-blue-500 bg-blue-100';
+        return 'bg-gray-50 border-l-4 border-gray-300';
       default:
-        return 'text-gray-500 bg-gray-100';
+        return 'bg-gray-50 border-l-4 border-gray-300';
     }
   };
   
+  // If no notifications, return minimal UI
+  if (notifications.length === 0) {
+    return (
+      <div className="card shadow-sm">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <IconComponent Icon={FiBell} className="text-gray-400 mr-2" />
+            <h3 className="card-title">Notifications</h3>
+          </div>
+        </div>
+        <div className="mt-4 text-center text-gray-500 py-6">
+          <p>No new notifications</p>
+        </div>
+      </div>
+    );
+  }
+  
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden">
-      <div 
-        className="p-4 flex items-center justify-between cursor-pointer"
-        onClick={() => setExpanded(!expanded)}
-      >
+    <div className="card shadow-sm">
+      <div className="flex items-center justify-between">
         <div className="flex items-center">
           <div className="relative">
-            <IconComponent Icon={FiBell} className="h-5 w-5 text-gray-600" />
+            <IconComponent Icon={FiBell} className="text-primary-500 mr-2" />
             {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+              <span className="absolute -top-1 -right-1 bg-danger-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
                 {unreadCount}
               </span>
             )}
           </div>
-          <h3 className="ml-2 text-lg font-semibold text-gray-800">Notifications</h3>
+          <h3 className="card-title">Notifications</h3>
         </div>
-        <IconComponent 
-          Icon={expanded ? FiChevronUp : FiChevronDown} 
-          className="h-5 w-5 text-gray-600" 
-        />
+        <button 
+          onClick={toggleExpanded}
+          className="text-gray-500 hover:text-gray-700 transition-colors"
+        >
+          {expanded ? (
+            <IconComponent Icon={FiChevronUp} />
+          ) : (
+            <IconComponent Icon={FiChevronDown} />
+          )}
+        </button>
       </div>
       
       <AnimatePresence>
@@ -221,75 +242,107 @@ const NotificationCenter: React.FC = () => {
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="border-t border-gray-200"
+            className="mt-4 space-y-3 overflow-hidden"
           >
-            {notifications.length === 0 ? (
-              <div className="p-6 text-center text-gray-500">
-                <p>No notifications at this time</p>
-              </div>
-            ) : (
-              <>
-                <div className="p-3 bg-gray-50 flex justify-between items-center border-b border-gray-200">
-                  <span className="text-sm text-gray-600">
-                    {unreadCount} unread notification{unreadCount !== 1 ? 's' : ''}
-                  </span>
-                  {unreadCount > 0 && (
-                    <button 
-                      onClick={markAllAsRead}
-                      className="text-sm text-indigo-600 hover:text-indigo-800"
-                    >
-                      Mark all as read
-                    </button>
-                  )}
+            {notifications.map((notification) => (
+              <motion.div
+                key={notification.id}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                className={`p-3 rounded-md ${getBackgroundColor(notification.priority)} relative`}
+              >
+                <div className="flex items-start">
+                  <div className="flex-shrink-0 mt-0.5 mr-3">
+                    {getNotificationIcon(notification.type)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-sm font-medium text-gray-900">{notification.title}</h4>
+                      <button 
+                        onClick={() => dismissNotification(notification.id)}
+                        className="ml-2 text-gray-400 hover:text-gray-600"
+                      >
+                        <IconComponent Icon={FiX} className="h-4 w-4" />
+                      </button>
+                    </div>
+                    <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
+                    
+                    <div className="mt-2 flex items-center justify-between">
+                      <span className="text-xs text-gray-500">
+                        {new Date(notification.date).toLocaleDateString()}
+                      </span>
+                      
+                      {notification.actionable && notification.action && (
+                        <button
+                          onClick={() => {
+                            markAsRead(notification.id);
+                            notification.action?.onClick();
+                          }}
+                          className="text-xs font-medium text-primary-600 hover:text-primary-800 transition-colors"
+                        >
+                          {notification.action.label}
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                
-                <div className="max-h-80 overflow-y-auto">
-                  {notifications.map((notification) => (
-                    <motion.div
-                      key={notification.id}
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className={`p-4 border-b border-gray-200 ${notification.read ? 'bg-white' : 'bg-blue-50'}`}
-                    >
-                      <div className="flex items-start">
-                        <div className={`p-2 rounded-full ${getPriorityColor(notification.priority)}`}>
-                          <IconComponent Icon={getIconForType(notification.type)} className="h-5 w-5" />
-                        </div>
-                        
-                        <div className="ml-3 flex-1">
-                          <div className="flex justify-between">
-                            <h4 className="text-sm font-medium text-gray-900">{notification.title}</h4>
-                            <button 
-                              onClick={() => markAsRead(notification.id)}
-                              className="text-gray-400 hover:text-gray-600"
-                            >
-                              <IconComponent Icon={FiX} className="h-4 w-4" />
-                            </button>
-                          </div>
-                          <p className="mt-1 text-sm text-gray-600">{notification.message}</p>
-                          
-                          {notification.actionable && notification.action && (
-                            <button
-                              onClick={() => {
-                                notification.action?.onClick();
-                                markAsRead(notification.id);
-                              }}
-                              className="mt-2 text-sm text-indigo-600 hover:text-indigo-800 font-medium"
-                              disabled={isOffline}
-                            >
-                              {notification.action.label}
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </>
-            )}
+              </motion.div>
+            ))}
           </motion.div>
         )}
       </AnimatePresence>
+      
+      {!expanded && notifications.length > 0 && (
+        <div className="mt-4">
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className={`p-3 rounded-md ${getBackgroundColor(notifications[0].priority)} relative`}
+          >
+            <div className="flex items-start">
+              <div className="flex-shrink-0 mt-0.5 mr-3">
+                {getNotificationIcon(notifications[0].type)}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-medium text-gray-900">{notifications[0].title}</h4>
+                </div>
+                <p className="text-sm text-gray-600 mt-1">{notifications[0].message}</p>
+                
+                <div className="mt-2 flex items-center justify-between">
+                  <span className="text-xs text-gray-500">
+                    {new Date(notifications[0].date).toLocaleDateString()}
+                  </span>
+                  
+                  {notifications[0].actionable && notifications[0].action && (
+                    <button
+                      onClick={() => {
+                        markAsRead(notifications[0].id);
+                        notifications[0].action?.onClick();
+                      }}
+                      className="btn btn-sm btn-primary"
+                    >
+                      {notifications[0].action.label}
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </motion.div>
+          
+          {notifications.length > 1 && (
+            <div className="mt-2 text-center">
+              <button 
+                onClick={toggleExpanded}
+                className="text-sm text-primary-600 hover:text-primary-800 font-medium"
+              >
+                View {notifications.length - 1} more notification{notifications.length > 2 ? 's' : ''}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

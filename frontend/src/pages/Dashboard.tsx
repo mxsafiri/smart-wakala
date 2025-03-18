@@ -14,10 +14,12 @@ import Badge from '../components/ui/Badge';
 import { FiDollarSign, FiCreditCard, FiShield, FiArrowUp, FiArrowDown, FiCheckCircle, FiActivity, FiAlertCircle, FiTrendingUp, FiPlus } from 'react-icons/fi';
 import { IconComponent } from '../utils/iconUtils';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const { user, isOffline } = useSelector((state: RootState) => state.auth);
+  const { t } = useTranslation();
   const { 
     overdraftBalance, 
     overdraftLimit, 
@@ -113,7 +115,7 @@ const Dashboard: React.FC = () => {
                   </div>
                   <div className="ml-3">
                     <p className="text-sm text-yellow-700">
-                      You are currently in offline mode. Some features may be limited.
+                      {t('common.offline')}. {t('dashboard.offlineModeLimited')}
                     </p>
                   </div>
                 </div>
@@ -135,8 +137,8 @@ const Dashboard: React.FC = () => {
                     <IconComponent Icon={FiTrendingUp} className="h-6 w-6 text-primary-600" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-semibold text-primary-800">Welcome to Smart Wakala</h2>
-                    <p className="text-sm text-gray-600">Never run out of float with our intelligent credit system</p>
+                    <h2 className="text-lg font-semibold text-primary-800">{t('dashboard.welcomeToSmartWakala')}</h2>
+                    <p className="text-sm text-gray-600">{t('dashboard.neverRunOutOfFloat')}</p>
                   </div>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
@@ -145,14 +147,14 @@ const Dashboard: React.FC = () => {
                     className="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-md transition duration-150 ease-in-out flex items-center justify-center"
                   >
                     <IconComponent Icon={FiPlus} className="mr-2" />
-                    Top Up Float
+                    {t('dashboard.topUpFloat')}
                   </button>
                   <button 
                     onClick={handleFloatManagementClick}
                     className="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-md transition duration-150 ease-in-out flex items-center justify-center"
                   >
                     <IconComponent Icon={FiDollarSign} className="mr-2" />
-                    Manage Float
+                    {t('dashboard.manageFloat')}
                   </button>
                 </div>
               </div>

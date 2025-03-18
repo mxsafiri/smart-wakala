@@ -4,9 +4,12 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../store';
 import PerformanceSettings from '../components/dashboard/PerformanceSettings';
 import NetworkStatus from '../components/ui/NetworkStatus';
+import { useTranslation } from 'react-i18next';
+import { FiGlobe } from 'react-icons/fi';
 
 const Settings: React.FC = () => {
   const { user, isOffline } = useSelector((state: RootState) => state.auth);
+  const { t, i18n } = useTranslation();
   
   // Animation variants
   const containerVariants = {
@@ -33,7 +36,7 @@ const Settings: React.FC = () => {
       <NetworkStatus position="floating" showAlways={false} />
       
       <div className="py-6">
-        <h1 className="text-2xl font-semibold text-gray-800 mb-6">Settings</h1>
+        <h1 className="text-2xl font-semibold text-gray-800 mb-6">{t('settings.settings')}</h1>
         
         <motion.div
           variants={containerVariants}
@@ -47,13 +50,49 @@ const Settings: React.FC = () => {
           
           <motion.div variants={itemVariants}>
             <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-medium text-gray-800 mb-4">Notification Preferences</h2>
+              <h2 className="text-lg font-medium text-gray-800 mb-4">{t('settings.language')}</h2>
+              
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-3 border rounded-md hover:bg-gray-50 cursor-pointer transition-colors duration-200"
+                     onClick={() => i18n.changeLanguage('en')}>
+                  <div className="flex items-center">
+                    <div className="p-2 bg-blue-50 rounded-full">
+                      <FiGlobe className="text-blue-600 h-5 w-5" />
+                    </div>
+                    <div className="ml-3">
+                      <p className="font-medium">{t('settings.english')}</p>
+                      <p className="text-sm text-gray-500">English</p>
+                    </div>
+                  </div>
+                  <div className={`h-4 w-4 rounded-full ${i18n.language === 'en' ? 'bg-primary-500' : 'bg-gray-200'}`}></div>
+                </div>
+                
+                <div className="flex items-center justify-between p-3 border rounded-md hover:bg-gray-50 cursor-pointer transition-colors duration-200"
+                     onClick={() => i18n.changeLanguage('sw')}>
+                  <div className="flex items-center">
+                    <div className="p-2 bg-green-50 rounded-full">
+                      <FiGlobe className="text-green-600 h-5 w-5" />
+                    </div>
+                    <div className="ml-3">
+                      <p className="font-medium">{t('settings.swahili')}</p>
+                      <p className="text-sm text-gray-500">Kiswahili</p>
+                    </div>
+                  </div>
+                  <div className={`h-4 w-4 rounded-full ${i18n.language === 'sw' ? 'bg-primary-500' : 'bg-gray-200'}`}></div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+          
+          <motion.div variants={itemVariants}>
+            <div className="bg-white rounded-lg shadow p-6">
+              <h2 className="text-lg font-medium text-gray-800 mb-4">{t('settings.notifications')}</h2>
               
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-sm font-medium text-gray-800">Transaction Alerts</h3>
-                    <p className="text-xs text-gray-500">Receive notifications for all transactions</p>
+                    <h3 className="text-sm font-medium text-gray-800">{t('settings.transactionAlerts')}</h3>
+                    <p className="text-xs text-gray-500">{t('settings.receiveNotificationsForAllTransactions')}</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" className="sr-only peer" defaultChecked />
@@ -63,8 +102,8 @@ const Settings: React.FC = () => {
                 
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-sm font-medium text-gray-800">Overdraft Alerts</h3>
-                    <p className="text-xs text-gray-500">Receive notifications about your overdraft status</p>
+                    <h3 className="text-sm font-medium text-gray-800">{t('settings.overdraftAlerts')}</h3>
+                    <p className="text-xs text-gray-500">{t('settings.receiveNotificationsAboutYourOverdraftStatus')}</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" className="sr-only peer" defaultChecked />
@@ -74,8 +113,8 @@ const Settings: React.FC = () => {
                 
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-sm font-medium text-gray-800">Repayment Reminders</h3>
-                    <p className="text-xs text-gray-500">Receive reminders for upcoming repayments</p>
+                    <h3 className="text-sm font-medium text-gray-800">{t('settings.repaymentReminders')}</h3>
+                    <p className="text-xs text-gray-500">{t('settings.receiveRemindersForUpcomingRepayments')}</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" className="sr-only peer" defaultChecked />
@@ -85,8 +124,8 @@ const Settings: React.FC = () => {
                 
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-sm font-medium text-gray-800">Performance Updates</h3>
-                    <p className="text-xs text-gray-500">Receive updates about your performance score</p>
+                    <h3 className="text-sm font-medium text-gray-800">{t('settings.performanceUpdates')}</h3>
+                    <p className="text-xs text-gray-500">{t('settings.receiveUpdatesAboutYourPerformanceScore')}</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" className="sr-only peer" defaultChecked />
@@ -99,13 +138,13 @@ const Settings: React.FC = () => {
           
           <motion.div variants={itemVariants}>
             <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-medium text-gray-800 mb-4">App Settings</h2>
+              <h2 className="text-lg font-medium text-gray-800 mb-4">{t('settings.appSettings')}</h2>
               
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-sm font-medium text-gray-800">Offline Mode</h3>
-                    <p className="text-xs text-gray-500">Enable offline functionality when internet is unavailable</p>
+                    <h3 className="text-sm font-medium text-gray-800">{t('settings.offlineMode')}</h3>
+                    <p className="text-xs text-gray-500">{t('settings.enableOfflineFunctionalityWhenInternetIsUnavailable')}</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" className="sr-only peer" defaultChecked />
@@ -115,8 +154,8 @@ const Settings: React.FC = () => {
                 
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-sm font-medium text-gray-800">Dark Mode</h3>
-                    <p className="text-xs text-gray-500">Switch between light and dark theme</p>
+                    <h3 className="text-sm font-medium text-gray-800">{t('settings.darkMode')}</h3>
+                    <p className="text-xs text-gray-500">{t('settings.switchBetweenLightAndDarkTheme')}</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" className="sr-only peer" />
@@ -126,12 +165,12 @@ const Settings: React.FC = () => {
                 
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-sm font-medium text-gray-800">Language</h3>
-                    <p className="text-xs text-gray-500">Choose your preferred language</p>
+                    <h3 className="text-sm font-medium text-gray-800">{t('settings.language')}</h3>
+                    <p className="text-xs text-gray-500">{t('settings.chooseYourPreferredLanguage')}</p>
                   </div>
                   <select className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block p-2.5">
-                    <option value="en">English</option>
-                    <option value="sw">Swahili</option>
+                    <option value="en">{t('settings.english')}</option>
+                    <option value="sw">{t('settings.swahili')}</option>
                   </select>
                 </div>
               </div>

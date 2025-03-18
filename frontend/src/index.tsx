@@ -7,6 +7,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { store } from './store';
 import ErrorBoundary from './components/common/ErrorBoundary';
+import './i18n'; // Import i18n configuration
 
 // Add console logging to help debug
 console.log('Environment variables loaded:', {

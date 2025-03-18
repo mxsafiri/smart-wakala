@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../../store';
-import { motion } from 'framer-motion';
-import { FiBarChart2, FiPercent, FiSettings, FiSave, FiAlertTriangle, FiRefreshCw } from 'react-icons/fi';
-import { IconComponent } from '../../utils/iconUtils';
-import axios from 'axios';
 import { updateRepaymentPercentage, updatePerformanceScore } from '../../store/slices/overdraftSlice';
 import { FloatTransaction } from '../../store/slices/floatSlice';
+import { motion } from 'framer-motion';
+import { FiSliders, FiTrendingUp, FiRefreshCw, FiCheckCircle, FiAlertCircle, FiBarChart2, FiPercent } from 'react-icons/fi';
+import { IconComponent } from '../../utils/iconUtils';
+import axios from 'axios';
+import { useTranslation } from 'react-i18next';
 
 // Define OpenAI API response types
 interface OpenAIMessage {
@@ -48,336 +49,317 @@ const PerformanceSettings: React.FC<PerformanceSettingsProps> = ({
   onUpdatePerformance,
   onUpdateRepaymentPercentage
 }) => {
-  const [score, setScore] = useState(performanceScore);
-  const [percentage, setPercentage] = useState(repaymentPercentage);
-  const [showScoreForm, setShowScoreForm] = useState(false);
-  const [showPercentageForm, setShowPercentageForm] = useState(false);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const dispatch = useDispatch();
+  const { t } = useTranslation();
+  const [localPercentage, setLocalPercentage] = useState(repaymentPercentage);
+  const [localScore, setLocalScore] = useState(performanceScore);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [isAssessing, setIsAssessing] = useState(false);
   const [aiRecommendation, setAiRecommendation] = useState<string | null>(null);
   const [aiError, setAiError] = useState<string | null>(null);
   
   // Calculate recommended percentage based on performance score
   const recommendedPercentage = Math.max(5, Math.min(20, Math.round(20 - (performanceScore / 10))));
   
-  // Determine if current percentage is optimal
-  const isOptimalPercentage = repaymentPercentage === recommendedPercentage;
+  // Handle slider change
+  const handlePercentageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setLocalPercentage(parseInt(e.target.value));
+  };
   
-  const transactions = useSelector((state: RootState) => state.float.transactions);
+  // Handle score change
+  const handleScoreChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setLocalScore(parseInt(e.target.value));
+  };
   
-  // Function to request AI assessment of performance
+  // Handle save
+  const handleSave = () => {
+    setIsUpdating(true);
+    
+    // Simulate API call
+    setTimeout(() => {
+      dispatch(updateRepaymentPercentage(localPercentage));
+      dispatch(updatePerformanceScore(localScore));
+      setIsUpdating(false);
+      setShowSuccess(true);
+      
+      // Hide success message after 3 seconds
+      setTimeout(() => {
+        setShowSuccess(false);
+      }, 3000);
+    }, 1000);
+  };
+  
+  // Request AI assessment
   const requestAiAssessment = async () => {
-    setIsAnalyzing(true);
-    setAiRecommendation(null);
-    setAiError(null);
+    setIsAssessing(true);
     
+    // Simulate API call to get AI assessment
     try {
-      // Prepare data for the OpenAI API
-      const transactionData: Array<{
-        amount: number;
-        type: string;
-        timestamp: number;
-        status: string;
-        description: string;
-      }> = transactions.slice(0, 20).map((tx: FloatTransaction) => ({
-        amount: tx.amount,
-        type: tx.type,
-        timestamp: tx.timestamp,
-        status: tx.status,
-        description: tx.description
-      }));
-      
-      const prompt = `
-        Based on the following transaction data for a mobile money agent:
-        ${JSON.stringify(transactionData)}
-        
-        Current performance metrics:
-        - Performance Score: ${performanceScore}%
-        - Auto-Deduction Rate: ${repaymentPercentage}%
-        
-        Please analyze this data and provide:
-        1. A recommended auto-deduction percentage (between 5% and 20%)
-        2. A brief explanation of why this rate is appropriate
-        3. Any suggestions for improving the agent's float management
-      `;
-      
-      try {
-        const response = await axios.post<OpenAIResponse>(
-          'https://api.openai.com/v1/chat/completions',
-          {
-            model: 'gpt-4',
-            messages: [
-              {
-                role: 'system',
-                content: 'You are a financial advisor specializing in mobile money agent operations and float liquidity management.'
-              },
-              {
-                role: 'user',
-                content: prompt
-              }
-            ],
-            temperature: 0.7,
-            max_tokens: 500
-          },
-          {
-            headers: {
-              'Authorization': `Bearer ${process.env.REACT_APP_OPENAI_API_KEY}`,
-              'Content-Type': 'application/json'
+      const response = await axios.post<OpenAIResponse>(
+        'https://api.openai.com/v1/chat/completions',
+        {
+          model: 'gpt-4',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are a financial advisor specializing in mobile money agent operations and float liquidity management.'
+            },
+            {
+              role: 'user',
+              content: `
+                Based on the following transaction data for a mobile money agent:
+                ${JSON.stringify(useSelector((state: RootState) => state.float.transactions).slice(0, 20).map((tx: FloatTransaction) => ({
+                  amount: tx.amount,
+                  type: tx.type,
+                  timestamp: tx.timestamp,
+                  status: tx.status,
+                  description: tx.description
+                })))}
+                
+                Current performance metrics:
+                - Performance Score: ${performanceScore}%
+                - Auto-Deduction Rate: ${repaymentPercentage}%
+                
+                Please analyze this data and provide:
+                1. A recommended auto-deduction percentage (between 5% and 20%)
+                2. A brief explanation of why this rate is appropriate
+                3. Any suggestions for improving the agent's float management
+              `
             }
+          ],
+          temperature: 0.7,
+          max_tokens: 500
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${process.env.REACT_APP_OPENAI_API_KEY}`,
+            'Content-Type': 'application/json'
           }
-        );
-        
-        setAiRecommendation(response.data.choices[0].message.content);
-        setIsAnalyzing(false);
-      } catch (error) {
-        console.error('Error calling OpenAI API:', error);
-        
-        // Fall back to simulated response if API call fails
-        setTimeout(() => {
-          const mockRecommendation = `
-            Based on your transaction history and current performance metrics, I recommend:
-            
-            **Recommended Auto-Deduction Rate: ${Math.max(5, Math.min(20, Math.round(repaymentPercentage * 0.9)))}%**
-            
-            This slightly lower rate is appropriate because:
-            - Your transaction volume is consistent and predictable
-            - You have a perfect repayment history
-            - Your collateral ratio is strong at 2:1
-            
-            To further improve your float management:
-            - Consider increasing your collateral deposit to qualify for an even lower rate
-            - Maintain your consistent repayment schedule
-            - Continue your current transaction volume to build a stronger history
-          `;
-          
-          setAiRecommendation(mockRecommendation);
-          setIsAnalyzing(false);
-        }, 2000);
-      }
+        }
+      );
       
+      setAiRecommendation(response.data.choices[0].message.content);
+      setIsAssessing(false);
     } catch (error) {
-      console.error('Error analyzing performance:', error);
-      setAiError('Failed to analyze performance. Please try again later.');
-      setIsAnalyzing(false);
+      console.error('Error calling OpenAI API:', error);
+      
+      // Fall back to simulated response if API call fails
+      setTimeout(() => {
+        const mockRecommendation = `
+          Based on your transaction history and current performance metrics, I recommend:
+          
+          **Recommended Auto-Deduction Rate: ${Math.max(5, Math.min(20, Math.round(repaymentPercentage * 0.9)))}%**
+          
+          This slightly lower rate is appropriate because:
+          - Your transaction volume is consistent and predictable
+          - You have a perfect repayment history
+          - Your collateral ratio is strong at 2:1
+          
+          To further improve your float management:
+          - Consider increasing your collateral deposit to qualify for an even lower rate
+          - Maintain your consistent repayment schedule
+          - Continue your current transaction volume to build a stronger history
+        `;
+        
+        setAiRecommendation(mockRecommendation);
+        setIsAssessing(false);
+      }, 2000);
     }
   };
   
-  const handleScoreSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (isProcessing) return;
-    
-    try {
-      await onUpdatePerformance(score);
-      setShowScoreForm(false);
-    } catch (error) {
-      console.error('Failed to update performance score:', error);
-    }
+  // Get color based on performance score
+  const getScoreColor = () => {
+    if (performanceScore >= 80) return 'text-success-600';
+    if (performanceScore >= 60) return 'text-primary-600';
+    if (performanceScore >= 40) return 'text-warning-600';
+    return 'text-danger-600';
   };
   
-  const handlePercentageSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (isProcessing) return;
-    
-    try {
-      await onUpdateRepaymentPercentage(percentage);
-      setShowPercentageForm(false);
-    } catch (error) {
-      console.error('Failed to update repayment percentage:', error);
-    }
+  // Get background color based on performance score
+  const getScoreBackground = () => {
+    if (performanceScore >= 80) return 'bg-success-100';
+    if (performanceScore >= 60) return 'bg-primary-100';
+    if (performanceScore >= 40) return 'bg-warning-100';
+    return 'bg-danger-100';
+  };
+  
+  // Get message based on performance score
+  const getScoreMessage = () => {
+    if (performanceScore >= 80) return t('performance.excellent');
+    if (performanceScore >= 60) return t('performance.good');
+    if (performanceScore >= 40) return t('performance.fair');
+    return t('performance.poor');
   };
   
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-gray-800">Performance Settings</h3>
-        <div className="p-2 bg-indigo-100 rounded-full">
-          <IconComponent Icon={FiSettings} className="h-5 w-5 text-indigo-600" />
+    <div className="card shadow-sm">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center">
+          <IconComponent Icon={FiSliders} className="text-primary-500 mr-2" />
+          <h3 className="card-title">{t('performance.performanceSettings')}</h3>
+        </div>
+        
+        <div className="flex items-center">
+          <div className={`px-3 py-1 rounded-full ${getScoreBackground()}`}>
+            <span className={`text-sm font-medium ${getScoreColor()}`}>
+              Score: {performanceScore} - {getScoreMessage()}
+            </span>
+          </div>
         </div>
       </div>
       
-      <div className="space-y-6">
-        {/* Performance Score Section */}
-        <div className="border-b border-gray-200 pb-4">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center">
-              <IconComponent Icon={FiBarChart2} className="h-5 w-5 text-gray-500 mr-2" />
-              <h4 className="text-sm font-medium text-gray-700">Agent Performance Score</h4>
-            </div>
-            <span className="text-lg font-semibold">{performanceScore}%</span>
-          </div>
+      {showSuccess && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0 }}
+          className="mb-4 p-3 bg-success-50 border border-success-200 rounded-md flex items-center"
+        >
+          <IconComponent Icon={FiCheckCircle} className="text-success-500 mr-2" />
+          <span className="text-sm text-success-800">{t('performance.settingsUpdatedSuccessfully')}</span>
+        </motion.div>
+      )}
+      
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-2">
+          <label htmlFor="repaymentPercentage" className="text-sm font-medium text-gray-700">
+            {t('performance.autoDeductionPercentage')}
+          </label>
+          <span className="text-sm text-primary-600 font-medium">
+            {localPercentage}%
+          </span>
+        </div>
+        
+        <div className="relative mt-2">
+          <input
+            type="range"
+            id="repaymentPercentage"
+            min="5"
+            max="20"
+            step="1"
+            value={localPercentage}
+            onChange={handlePercentageChange}
+            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary-600"
+          />
           
-          <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
-            <motion.div 
-              className={`h-2 rounded-full ${
-                performanceScore >= 80 ? 'bg-green-500' : 
-                performanceScore >= 60 ? 'bg-yellow-500' : 'bg-red-500'
-              }`}
-              style={{ width: `${performanceScore}%` }}
-              initial={{ width: 0 }}
-              animate={{ width: `${performanceScore}%` }}
-              transition={{ duration: 0.8 }}
-            ></motion.div>
+          <div className="flex justify-between text-xs text-gray-500 mt-1">
+            <span>5%</span>
+            <span>10%</span>
+            <span>15%</span>
+            <span>20%</span>
           </div>
+        </div>
+        
+        <div className="flex items-center justify-between mb-2 mt-4">
+          <label htmlFor="performanceScore" className="text-sm font-medium text-gray-700">
+            {t('performance.performanceScore')}
+          </label>
+          <span className="text-sm text-primary-600 font-medium">
+            {localScore}%
+          </span>
+        </div>
+        
+        <div className="relative mt-2">
+          <input
+            type="range"
+            id="performanceScore"
+            min="0"
+            max="100"
+            step="1"
+            value={localScore}
+            onChange={handleScoreChange}
+            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary-600"
+          />
           
-          {!showScoreForm ? (
+          <div className="flex justify-between text-xs text-gray-500 mt-1">
+            <span>0%</span>
+            <span>50%</span>
+            <span>100%</span>
+          </div>
+        </div>
+        
+        {localPercentage !== repaymentPercentage || localScore !== performanceScore && (
+          <div className="mt-4 flex justify-end">
             <button
-              onClick={() => setShowScoreForm(true)}
-              className="text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+              onClick={handleSave}
+              disabled={isUpdating}
+              className="btn btn-sm btn-primary"
             >
-              Update Performance Score
+              {isUpdating ? (
+                <>
+                  <span className="animate-spin mr-2">
+                    <IconComponent Icon={FiRefreshCw} className="h-4 w-4" />
+                  </span>
+                  {t('common.updating')}
+                </>
+              ) : (
+                t('common.saveChanges')
+              )}
             </button>
-          ) : (
-            <form onSubmit={handleScoreSubmit} className="space-y-3">
-              <div>
-                <label htmlFor="performanceScore" className="block text-sm font-medium text-gray-700">
-                  New Performance Score (0-100)
-                </label>
-                <input
-                  type="number"
-                  id="performanceScore"
-                  min="0"
-                  max="100"
-                  value={score}
-                  onChange={(e) => setScore(Number(e.target.value))}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                  required
-                />
-              </div>
-              
-              <div className="flex space-x-3">
-                <button
-                  type="submit"
-                  disabled={isProcessing}
-                  className={`flex-1 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
-                    isProcessing ? 'bg-gray-400' : 'bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'
-                  }`}
-                >
-                  <IconComponent Icon={FiSave} className="h-4 w-4 inline mr-1" />
-                  Save
-                </button>
-                
-                <button
-                  type="button"
-                  onClick={() => setShowScoreForm(false)}
-                  className="flex-1 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
+          </div>
+        )}
+      </div>
+      
+      <div className="border-t border-gray-200 pt-4">
+        <div className="flex items-center mb-3">
+          <IconComponent Icon={FiTrendingUp} className="text-primary-500 mr-2" />
+          <h4 className="text-sm font-medium text-gray-800">{t('performance.aiRecommendations')}</h4>
+        </div>
+        
+        <div className="bg-gray-50 p-3 rounded-md mb-3">
+          <p className="text-sm text-gray-600 mb-2">
+            {t('performance.recommendationText', { percentage: recommendedPercentage })}
+          </p>
+          
+          {recommendedPercentage !== localPercentage && (
+            <button
+              onClick={() => setLocalPercentage(recommendedPercentage)}
+              className="text-sm text-primary-600 hover:text-primary-800 font-medium"
+            >
+              {t('performance.applyRecommendation')}
+            </button>
           )}
         </div>
         
-        {/* Repayment Percentage Section */}
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center">
-              <IconComponent Icon={FiPercent} className="h-5 w-5 text-gray-500 mr-2" />
-              <h4 className="text-sm font-medium text-gray-700">Auto-Deduction Percentage</h4>
-            </div>
-            <span className="text-lg font-semibold">{repaymentPercentage}%</span>
+        <div className="flex justify-between items-center">
+          <div className="text-xs text-gray-500">
+            {t('performance.lastAssessment')}: {new Date().toLocaleDateString()}
           </div>
           
-          {!isOptimalPercentage && (
-            <div className="bg-yellow-50 p-3 rounded-md mb-4">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <IconComponent Icon={FiAlertTriangle} className="h-5 w-5 text-yellow-400" />
-                </div>
-                <div className="ml-3">
-                  <p className="text-sm text-yellow-700">
-                    Based on the current performance score, the recommended auto-deduction percentage is {recommendedPercentage}%.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {!showPercentageForm ? (
-            <button
-              onClick={() => setShowPercentageForm(true)}
-              className="text-sm text-indigo-600 hover:text-indigo-800 font-medium"
-            >
-              Update Auto-Deduction Percentage
-            </button>
-          ) : (
-            <form onSubmit={handlePercentageSubmit} className="space-y-3">
-              <div>
-                <label htmlFor="repaymentPercentage" className="block text-sm font-medium text-gray-700">
-                  New Auto-Deduction Percentage (5-20)
-                </label>
-                <input
-                  type="number"
-                  id="repaymentPercentage"
-                  min="5"
-                  max="20"
-                  value={percentage}
-                  onChange={(e) => setPercentage(Number(e.target.value))}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                  required
-                />
-                <p className="mt-1 text-xs text-gray-500">
-                  Recommended: {recommendedPercentage}% (based on performance score)
-                </p>
-              </div>
-              
-              <div className="flex space-x-3">
-                <button
-                  type="submit"
-                  disabled={isProcessing}
-                  className={`flex-1 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
-                    isProcessing ? 'bg-gray-400' : 'bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'
-                  }`}
-                >
-                  <IconComponent Icon={FiSave} className="h-4 w-4 inline mr-1" />
-                  Save
-                </button>
-                
-                <button
-                  type="button"
-                  onClick={() => setShowPercentageForm(false)}
-                  className="flex-1 py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          )}
-        </div>
-        
-        {/* AI Assessment Button */}
-        <div className="mt-4">
           <button
             onClick={requestAiAssessment}
-            className="w-full flex items-center justify-center bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-medium py-2 px-4 rounded-md hover:from-purple-700 hover:to-indigo-700 transition duration-150 ease-in-out"
-            disabled={isAnalyzing}
+            disabled={isAssessing}
+            className="btn btn-sm btn-outline"
           >
-            <IconComponent Icon={FiRefreshCw} className={`mr-2 ${isAnalyzing ? 'animate-spin' : ''}`} />
-            {isAnalyzing ? 'Analyzing Performance...' : 'Get AI Assessment'}
+            {isAssessing ? (
+              <>
+                <span className="animate-spin mr-2">
+                  <IconComponent Icon={FiRefreshCw} className="h-4 w-4" />
+                </span>
+                {t('performance.assessing')}
+              </>
+            ) : (
+              <>
+                <IconComponent Icon={FiRefreshCw} className="mr-1" />
+                {t('performance.reassessNow')}
+              </>
+            )}
           </button>
-          
-          {aiError && (
-            <div className="mt-3 text-sm text-red-600">
-              {aiError}
-            </div>
-          )}
-          
-          {aiRecommendation && (
-            <motion.div 
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mt-4 p-3 bg-purple-50 border border-purple-100 rounded-md"
-            >
-              <h4 className="text-sm font-semibold text-purple-800 mb-2">AI Recommendation</h4>
-              <div className="text-sm text-gray-700 whitespace-pre-line">
-                {aiRecommendation}
-              </div>
-            </motion.div>
-          )}
         </div>
         
-        <p className="text-xs text-gray-500 mt-4">
-          A higher performance score can lower your auto-deduction percentage and increase your overdraft limit multiplier.
-        </p>
+        {aiRecommendation && (
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-4 p-3 bg-purple-50 border border-purple-100 rounded-md"
+          >
+            <h4 className="text-sm font-semibold text-purple-800 mb-2">{t('performance.aiRecommendation')}</h4>
+            <div className="text-sm text-gray-700 whitespace-pre-line">
+              {aiRecommendation}
+            </div>
+          </motion.div>
+        )}
       </div>
     </div>
   );
@@ -385,6 +367,7 @@ const PerformanceSettings: React.FC<PerformanceSettingsProps> = ({
 
 const PerformanceSettingsContainer: React.FC = () => {
   const dispatch = useDispatch();
+  const { t } = useTranslation();
   const { 
     performanceScore, 
     repaymentPercentage,

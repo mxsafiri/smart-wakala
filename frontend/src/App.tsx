@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { useAuthState } from './hooks/useAuthState';
 import { checkNetworkStatus } from './store/slices/authSlice';
+import { useTranslation } from 'react-i18next';
 import Dashboard from './pages/Dashboard';
 import FloatTopUp from './pages/FloatTopUp';
 import FloatManagement from './pages/FloatManagement';
@@ -18,11 +19,13 @@ import LoadingScreen from './components/common/LoadingScreen';
 import TestPage from './pages/TestPage';
 import TestFirebase from './pages/TestFirebase';
 import OfflineIndicator from './components/common/OfflineIndicator';
+import DesignSystem from './components/ui/DesignSystem';
 
 const App: React.FC = () => {
   const { user, loading, error } = useAuthState();
   const [firebaseInitialized, setFirebaseInitialized] = useState(false);
   const dispatch = useDispatch();
+  const { t } = useTranslation();
 
   // Add console logging to help debug
   console.log('App rendering, auth state:', { user, loading, error });
@@ -102,12 +105,13 @@ const App: React.FC = () => {
   }
 
   return (
-    <>
+    <Suspense fallback={<LoadingScreen />}>
       <OfflineIndicator />
       <Routes>
         {/* Public routes */}
         <Route path="/test" element={<TestPage />} />
         <Route path="/test-firebase" element={<TestFirebase />} />
+        <Route path="/design-system" element={<DesignSystem />} />
         
         {/* Auth routes - completely separate from any layout */}
         <Route path="/login" element={<Login />} />
@@ -130,7 +134,7 @@ const App: React.FC = () => {
         <Route path="/" element={<Navigate to={user ? "/dashboard" : "/login"} />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
-    </>
+    </Suspense>
   );
 };
 

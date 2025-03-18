@@ -15,6 +15,7 @@ import {
   FiHelpCircle
 } from 'react-icons/fi';
 import { IconComponent } from '../../utils/iconUtils';
+import { useTranslation } from 'react-i18next';
 
 interface CreditScoreFactorsProps {
   creditScoreFactors: {
@@ -32,6 +33,7 @@ const CreditScoreFactors: React.FC<CreditScoreFactorsProps> = ({
 }) => {
   const [expanded, setExpanded] = useState(false);
   const [activeFactorTip, setActiveFactorTip] = useState<string | null>(null);
+  const { t } = useTranslation();
   
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'text-green-600';
@@ -46,10 +48,10 @@ const CreditScoreFactors: React.FC<CreditScoreFactorsProps> = ({
   };
   
   const factorDescriptions = {
-    repaymentHistory: 'Based on your history of on-time repayments and auto-deductions',
-    transactionVolume: 'Based on your transaction frequency and volume over time',
-    collateralRatio: 'Based on your collateral amount relative to your overdraft limit',
-    accountAge: 'Based on how long you have been using the Smart Wakala platform'
+    repaymentHistory: t('overdraft.repaymentHistoryDescription'),
+    transactionVolume: t('overdraft.transactionVolumeDescription'),
+    collateralRatio: t('overdraft.collateralRatioDescription'),
+    accountAge: t('overdraft.accountAgeDescription')
   };
   
   const factorWeights = {
