@@ -4,8 +4,8 @@ import { RootState } from '../../store';
 import Header from './Header';
 import Sidebar from './Sidebar';
 import Footer from './Footer';
-import NetworkStatusIndicator from '../common/NetworkStatusIndicator';
-import { checkNetworkStatus } from '../../store/slices/authSlice';
+import NetworkStatus from '../ui/NetworkStatus';
+import { setOfflineStatus } from '../../store/slices/authSlice';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -15,21 +15,30 @@ interface MainLayoutProps {
 export const MainLayoutContext = React.createContext<boolean>(false);
 
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
-  const { isAuthenticated, isOffline } = useSelector((state: RootState) => state.auth);
+  const { isOffline } = useSelector((state: RootState) => state.auth);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const dispatch = useDispatch();
   
   // Check if this MainLayout is nested inside another MainLayout
   const isNested = React.useContext(MainLayoutContext);
   
-  // Initialize network status monitoring
   useEffect(() => {
-    dispatch(checkNetworkStatus() as any);
+    const handleNetworkChange = () => {
+      dispatch(setOfflineStatus(!navigator.onLine));
+    };
+
+    // Initial check
+    handleNetworkChange();
+    
+    // Add event listeners
+    window.addEventListener('online', handleNetworkChange);
+    window.addEventListener('offline', handleNetworkChange);
+    
+    return () => {
+      window.removeEventListener('online', handleNetworkChange);
+      window.removeEventListener('offline', handleNetworkChange);
+    };
   }, [dispatch]);
-  
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
   
   // If this is a nested MainLayout, just render children without headers/footers
   if (isNested) {
@@ -39,19 +48,22 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   return (
     // Provide context value to prevent nested MainLayouts
     <MainLayoutContext.Provider value={true}>
-      <div className="flex flex-col min-h-screen bg-gray-50">
+      <div className="flex flex-col min-h-screen bg-gray-100">
         {/* Always show network status indicator */}
-        <NetworkStatusIndicator />
+        <NetworkStatus position="floating" />
         
         {/* Only render one header */}
-        <Header toggleSidebar={toggleSidebar} />
+        <Header 
+          onMenuClick={() => setSidebarOpen(true)}
+        />
         
         <div className="flex flex-1">
-          {isAuthenticated && (
-            <Sidebar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
-          )}
+          <Sidebar 
+            isOpen={sidebarOpen} 
+            onClose={() => setSidebarOpen(false)}
+          />
           
-          <main className={`flex-1 ${isAuthenticated ? 'md:ml-64' : ''} p-4 md:p-6 transition-all duration-300`}>
+          <main className={`flex-1 p-4 md:p-6 transition-all duration-300`}>
             {isOffline && (
               <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md text-yellow-700 text-sm">
                 <p className="flex items-center">
@@ -68,7 +80,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           </main>
         </div>
         
-        {isAuthenticated && <Footer />}
+        <Footer />
       </div>
     </MainLayoutContext.Provider>
   );

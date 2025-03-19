@@ -154,6 +154,7 @@ export const useAuthState = () => {
               phone: currentUser.phoneNumber || '',
               address: '',
               agentId: currentUser.uid.substring(0, 6),
+              nationalId: '',
             };
             setLocalUser(recoveredUser);
             dispatch(setUser(recoveredUser));
@@ -183,6 +184,7 @@ export const useAuthState = () => {
             phone: firebaseUser.phoneNumber || '',
             address: '',
             agentId: firebaseUser.uid.substring(0, 6),
+            nationalId: '',
           };
           
           // First, update the local and Redux state with the basic user info
@@ -219,6 +221,7 @@ export const useAuthState = () => {
                   phone: userData.phone || firebaseUser.phoneNumber || '',
                   address: userData.address || '',
                   agentId: userData.agentId || firebaseUser.uid.substring(0, 6),
+                  nationalId: userData.nationalId || '',
                 };
                 
                 // Update with enhanced profile
@@ -244,6 +247,7 @@ export const useAuthState = () => {
                     phone: basicUser.phoneNumber,
                     address: '',
                     agentId: basicUser.agentId,
+                    nationalId: '',
                     createdAt: new Date().toISOString(),
                   });
                   console.log('Created basic Firestore profile');

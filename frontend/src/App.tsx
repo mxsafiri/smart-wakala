@@ -2,7 +2,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { useAuthState } from './hooks/useAuthState';
-import { checkNetworkStatus } from './store/slices/authSlice';
+import { setOfflineStatus } from './store/slices/authSlice';
 import { useTranslation } from 'react-i18next';
 import Dashboard from './pages/Dashboard';
 import FloatTopUp from './pages/FloatTopUp';
@@ -32,13 +32,21 @@ const App: React.FC = () => {
   // Add console logging to help debug
   console.log('App rendering, auth state:', { user, loading, error });
 
-  // Initialize network status monitoring
   useEffect(() => {
-    const unsubscribe = dispatch(checkNetworkStatus() as any);
+    const handleNetworkChange = () => {
+      dispatch(setOfflineStatus(!navigator.onLine));
+    };
+
+    // Initial check
+    handleNetworkChange();
+    
+    // Add event listeners
+    window.addEventListener('online', handleNetworkChange);
+    window.addEventListener('offline', handleNetworkChange);
+    
     return () => {
-      if (typeof unsubscribe === 'function') {
-        unsubscribe();
-      }
+      window.removeEventListener('online', handleNetworkChange);
+      window.removeEventListener('offline', handleNetworkChange);
     };
   }, [dispatch]);
 

@@ -1,98 +1,82 @@
 import React, { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../../store';
+import { motion, AnimatePresence } from 'framer-motion';
 import { FiWifi, FiWifiOff } from 'react-icons/fi';
-import Badge from './Badge';
 import { IconComponent } from '../../utils/iconUtils';
+import { setOfflineStatus } from '../../store/slices/authSlice';
 
 interface NetworkStatusProps {
-  position?: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left' | 'floating';
+  position?: 'floating' | 'inline';
   showAlways?: boolean;
-  className?: string;
 }
 
-const NetworkStatus: React.FC<NetworkStatusProps> = ({
-  position = 'top-right',
-  showAlways = false,
-  className = '',
+const NetworkStatus: React.FC<NetworkStatusProps> = ({ 
+  position = 'floating',
+  showAlways = false 
 }) => {
+  const dispatch = useDispatch();
   const { isOffline } = useSelector((state: RootState) => state.auth);
-  const [visible, setVisible] = useState(false);
-  
-  // Position classes
-  const positionClasses = {
-    'top-right': 'top-4 right-4',
-    'top-left': 'top-4 left-4',
-    'bottom-right': 'bottom-4 right-4',
-    'bottom-left': 'bottom-4 left-4',
-    'floating': 'fixed top-4 right-4 z-50',
-  };
-  
-  // Animation variants
-  const containerVariants = {
-    initial: { opacity: 0, y: -10 },
-    animate: { 
-      opacity: 1, 
-      y: 0,
-      transition: { duration: 0.3 }
-    },
-    exit: { 
-      opacity: 0, 
-      y: -10,
-      transition: { duration: 0.2 }
-    }
-  };
+  const [showStatus, setShowStatus] = useState(false);
   
   useEffect(() => {
-    // Always show if showAlways is true
-    if (showAlways) {
-      setVisible(true);
-      return;
-    }
-    
-    // Show when offline
-    if (isOffline) {
-      setVisible(true);
-    } else {
-      // When coming back online, show for 3 seconds then hide
-      setVisible(true);
-      const timer = setTimeout(() => {
-        setVisible(false);
-      }, 3000);
+    const updateNetworkStatus = () => {
+      const offline = !navigator.onLine;
+      dispatch(setOfflineStatus(offline));
       
-      return () => clearTimeout(timer);
-    }
-  }, [isOffline, showAlways]);
+      if (offline || showAlways) {
+        setShowStatus(true);
+        // Hide after 5 seconds if we're back online
+        if (!offline && !showAlways) {
+          setTimeout(() => setShowStatus(false), 5000);
+        }
+      }
+    };
+    
+    // Initial check
+    updateNetworkStatus();
+    
+    // Listen for network status changes
+    window.addEventListener('online', updateNetworkStatus);
+    window.addEventListener('offline', updateNetworkStatus);
+    
+    return () => {
+      window.removeEventListener('online', updateNetworkStatus);
+      window.removeEventListener('offline', updateNetworkStatus);
+    };
+  }, [dispatch, showAlways]);
   
-  // If not visible and not showAlways, don't render
-  if (!visible && !showAlways) {
-    return null;
-  }
+  if (!showStatus) return null;
   
   return (
     <AnimatePresence>
-      {visible && (
-        <motion.div
-          className={`${position === 'floating' ? 'fixed' : 'absolute'} ${positionClasses[position]} ${className}`}
-          variants={containerVariants}
-          initial="initial"
-          animate="animate"
-          exit="exit"
-        >
-          <Badge
-            variant={isOffline ? 'error' : 'success'}
-            icon={
-              <IconComponent Icon={isOffline ? FiWifiOff : FiWifi} />
-            }
-            label={isOffline ? 'Offline' : 'Online'}
-            size="md"
-            rounded
-            outlined
-            animated={false}
+      <motion.div
+        initial={{ opacity: 0, y: position === 'floating' ? 20 : 0 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: position === 'floating' ? 20 : 0 }}
+        className={`
+          ${position === 'floating' ? 'fixed bottom-4 right-4 z-50' : 'relative'}
+          ${isOffline ? 'bg-yellow-50' : 'bg-green-50'}
+          rounded-lg shadow-sm border
+          ${isOffline ? 'border-yellow-200' : 'border-green-200'}
+          p-3
+        `}
+      >
+        <div className="flex items-center gap-2">
+          <IconComponent 
+            Icon={isOffline ? FiWifiOff : FiWifi}
+            className={`w-4 h-4 ${isOffline ? 'text-yellow-500' : 'text-green-500'}`}
           />
-        </motion.div>
-      )}
+          <span className={`text-sm font-medium ${isOffline ? 'text-yellow-700' : 'text-green-700'}`}>
+            {isOffline ? 'Offline Mode' : 'Back Online'}
+          </span>
+        </div>
+        {isOffline && (
+          <p className="text-xs text-yellow-600 mt-1">
+            Some features may be limited. Changes will sync when you're back online.
+          </p>
+        )}
+      </motion.div>
     </AnimatePresence>
   );
 };

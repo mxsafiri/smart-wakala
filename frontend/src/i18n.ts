@@ -12,6 +12,16 @@ import swTranslation from './locales/sw/translation.json';
 // Get saved language from localStorage or use browser detection
 const savedLanguage = localStorage.getItem('smartWakalaLanguage');
 
+// Define resources type
+export const resources = {
+  en: {
+    common: enTranslation
+  },
+  sw: {
+    common: swTranslation
+  }
+} as const;
+
 i18n
   // Load translations from backend (for larger projects)
   .use(Backend)
@@ -21,14 +31,8 @@ i18n
   .use(initReactI18next)
   // init i18next
   .init({
-    resources: {
-      en: {
-        translation: enTranslation
-      },
-      sw: {
-        translation: swTranslation
-      }
-    },
+    resources,
+    defaultNS: 'common',
     fallbackLng: 'en',
     debug: process.env.NODE_ENV === 'development',
     

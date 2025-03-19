@@ -1,0 +1,19 @@
+{
+  "actions": {
+    "increaseScore": "Increase Score",
+    "decreaseScore": "Decrease Score",
+    "optimizeRate": "Optimize Rate"
+  },
+  "ai": {
+    "recommendation": "AI Recommendations",
+    "analyzing": "Analyzing...",
+    "getAdvice": "Get AI Advice"
+  },
+  "errors": {
+    "offlineMode": "Cannot get AI recommendations while offline",
+    "invalidApiKey": "Invalid API key. Please check your configuration.",
+    "tooManyRequests": "Too many requests. Please try again later.",
+    "aiRequestFailed": "Failed to get AI recommendations",
+    "unexpectedError": "An unexpected error occurred"
+  }
+}

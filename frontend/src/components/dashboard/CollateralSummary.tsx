@@ -34,6 +34,19 @@ const CollateralSummary: React.FC<CollateralSummaryProps> = ({
     }).format(amount);
   };
 
+  const getPaymentMethodLabel = (method: string) => {
+    switch (method) {
+      case 'mobile_money':
+        return 'Mobile Money';
+      case 'bank_transfer':
+        return 'Bank Transfer';
+      case 'cash_deposit':
+        return 'Cash Deposit';
+      default:
+        return method;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!amount || isProcessing) return;
@@ -137,9 +150,9 @@ const CollateralSummary: React.FC<CollateralSummaryProps> = ({
               onChange={(e) => setPaymentMethod(e.target.value)}
               className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
             >
-              <option value="mobile_money">Mobile Money</option>
-              <option value="bank_transfer">Bank Transfer</option>
-              <option value="cash_deposit">Cash Deposit</option>
+              <option value="mobile_money">{getPaymentMethodLabel('mobile_money')}</option>
+              <option value="bank_transfer">{getPaymentMethodLabel('bank_transfer')}</option>
+              <option value="cash_deposit">{getPaymentMethodLabel('cash_deposit')}</option>
             </select>
           </div>
           
@@ -175,20 +188,24 @@ const CollateralSummary: React.FC<CollateralSummaryProps> = ({
 const CollateralSummaryContainer: React.FC = () => {
   const dispatch = useDispatch();
   const { 
-    collateralAmount, 
+    collateralAmount,
+    performanceScore = 85, // Default value if not in state
     isProcessing 
   } = useSelector((state: RootState) => state.overdraft);
   
-  // In a real app, this would be calculated based on transaction history, repayment timeliness, etc.
-  const performanceScore = 85; 
-  
   // Calculate max overdraft eligibility based on collateral and performance
   // Higher performance scores give better leverage
-  const leverageMultiplier = 2 + (performanceScore / 100);
+  const leverageMultiplier = performanceScore >= 80 ? 3 : performanceScore >= 60 ? 2.5 : 2;
   const maxOverdraftEligibility = Math.round(collateralAmount * leverageMultiplier);
   
   const handleAddCollateral = async (amount: number, paymentMethod: string) => {
-    await dispatch(updateCollateral({ amount, paymentMethod }));
+    try {
+      await dispatch(updateCollateral({ amount, paymentMethod }) as any);
+      return Promise.resolve();
+    } catch (error) {
+      console.error('Failed to update collateral:', error);
+      return Promise.reject(error);
+    }
   };
   
   return (

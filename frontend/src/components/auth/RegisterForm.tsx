@@ -10,6 +10,7 @@ import Button from '../ui/Button';
 import { registerUser } from '../../store/slices/authSlice';
 import { RootState, AppDispatch } from '../../store';
 import { IconComponent } from '../../utils/iconUtils';
+import { fetchUserByNationalId } from '../../services/nidaService';
 
 // Form validation schema
 const schema = yup.object().shape({
@@ -28,6 +29,7 @@ const schema = yup.object().shape({
     .string()
     .matches(/^[0-9+\s-]+$/, 'Invalid phone number')
     .required('Phone number is required'),
+  nationalId: yup.string().required('National ID number is required'),
 });
 
 // Form data interface
@@ -38,6 +40,7 @@ interface RegisterFormData {
   confirmPassword: string;
   businessName: string;
   phone: string;
+  nationalId: string;
 }
 
 const RegisterForm: React.FC = () => {
@@ -59,6 +62,10 @@ const RegisterForm: React.FC = () => {
   // Form submission handler
   const onSubmit = async (data: RegisterFormData) => {
     try {
+      // Validate National ID
+      const userDetail = await fetchUserByNationalId(data.nationalId);
+      console.log('User Details:', userDetail);
+
       await dispatch(
         registerUser({
           fullName: data.fullName,
@@ -66,6 +73,7 @@ const RegisterForm: React.FC = () => {
           phoneNumber: data.phone,
           email: data.email,
           password: data.password,
+          nationalId: data.nationalId,
         })
       );
       reset();
@@ -194,6 +202,15 @@ const RegisterForm: React.FC = () => {
             error={errors.phone?.message}
             {...register('phone')}
             leftIcon={<IconComponent Icon={FiPhone} />}
+          />
+        </motion.div>
+        
+        <motion.div variants={itemVariants}>
+          <Input
+            label="National ID Number"
+            placeholder="Enter your national ID number"
+            error={errors.nationalId?.message}
+            {...register('nationalId')}
           />
         </motion.div>
         

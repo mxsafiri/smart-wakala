@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store';
 import { motion } from 'framer-motion';
-import StatCard from '../components/dashboard/StatCard';
 import FloatSummary from '../components/dashboard/FloatSummary';
 import RepaymentProgress from '../components/dashboard/RepaymentProgress';
 import CollateralSummary from '../components/dashboard/CollateralSummary';
@@ -96,7 +95,17 @@ const Dashboard: React.FC = () => {
   const handleFloatTopUpClick = () => {
     navigate('/float-top-up');
   };
-  
+
+  const handleUpdatePerformance = async (score: number) => {
+    // TODO: Implement performance update logic
+    console.log('Updating performance score:', score);
+  };
+
+  const handleUpdateRepaymentPercentage = async (percentage: number) => {
+    // TODO: Implement repayment percentage update logic
+    console.log('Updating repayment percentage:', percentage);
+  };
+
   return (
     <>
       {/* Network status indicator */}
@@ -167,39 +176,26 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
           </motion.div>
-          
-          {/* Key Stats Cards - Rearranged for better visual flow */}
+
+          {/* Performance Settings */}
           <motion.div variants={itemVariants}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-              <StatCard
-                title="Float Balance"
-                value={formatCurrency(dashboardData.floatBalance)}
-                change={5.2}
-                icon={<IconComponent Icon={FiDollarSign} className="text-primary-600" />}
-                className="bg-primary-50"
-              />
-              
-              <StatCard
-                title="Available Overdraft"
-                value={formatCurrency(availableOverdraft)}
-                change={-2.4}
-                icon={<IconComponent Icon={FiCreditCard} className="text-purple-600" />}
-                className="bg-purple-50"
-              />
-              
-              <StatCard
-                title="Collateral Balance"
-                value={formatCurrency(collateralAmount)}
-                change={12.5}
-                icon={<IconComponent Icon={FiShield} className="text-blue-600" />}
-                className="bg-blue-50"
-              />
-            </div>
+            <PerformanceSettings 
+              performanceScore={performanceScore || 0}
+              repaymentPercentage={repaymentPercentage || 10}
+              isProcessing={false}
+              displayName={user?.displayName}
+              onUpdatePerformance={handleUpdatePerformance}
+              onUpdateRepaymentPercentage={handleUpdateRepaymentPercentage}
+              isOnline={!isOffline}
+            />
           </motion.div>
           
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6">
             {/* Left column - 8/12 width on large screens */}
             <motion.div variants={itemVariants} className="lg:col-span-8 space-y-4 md:space-y-6">
+              {/* Collateral Summary - Moved to top of left column */}
+              <CollateralSummary />
+              
               {/* Credit Score Factors */}
               <CreditScoreFactors />
               
@@ -209,12 +205,6 @@ const Dashboard: React.FC = () => {
             
             {/* Right column - 4/12 width on large screens */}
             <motion.div variants={itemVariants} className="lg:col-span-4 space-y-4 md:space-y-6">
-              {/* Performance Settings */}
-              <PerformanceSettings />
-              
-              {/* Collateral Summary */}
-              <CollateralSummary />
-              
               {/* Float Summary */}
               <FloatSummary
                 floatBalance={dashboardData.floatBalance}

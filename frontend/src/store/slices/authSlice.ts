@@ -15,7 +15,17 @@ import {
 } from 'firebase/firestore';
 import { auth, db } from '../../services/firebase';
 
-export interface UserProfile {
+interface AuthState {
+  user: UserProfile | null;
+  isOffline: boolean;
+  lastSyncTime: number | null;
+  error: string | null;
+  isLoading: boolean;
+  retryTimeout: number;
+  maxRetries: number;
+}
+
+interface UserProfile {
   uid: string;
   email: string;
   displayName: string;
@@ -26,22 +36,17 @@ export interface UserProfile {
   phone: string;
   address: string;
   agentId: string;
-}
-
-interface AuthState {
-  user: UserProfile | null;
-  loading: boolean;
-  error: string | null;
-  isAuthenticated: boolean;
-  isOffline: boolean;
+  nationalId: string;
 }
 
 const initialState: AuthState = {
   user: null,
-  loading: true,
+  isOffline: false,
+  lastSyncTime: null,
   error: null,
-  isAuthenticated: false,
-  isOffline: false
+  isLoading: false,
+  retryTimeout: 5000, // Start with 5 seconds
+  maxRetries: 5
 };
 
 const authSlice = createSlice({
@@ -50,89 +55,90 @@ const authSlice = createSlice({
   reducers: {
     setUser: (state, action: PayloadAction<UserProfile | null>) => {
       state.user = action.payload;
-      state.isAuthenticated = !!action.payload;
-      state.loading = false;
-    },
-    setLoading: (state, action: PayloadAction<boolean>) => {
-      state.loading = action.payload;
-    },
-    setError: (state, action: PayloadAction<string | null>) => {
-      state.error = action.payload;
-      state.loading = false;
+      state.error = null;
+      state.isLoading = false;
+      if (action.payload) {
+        state.lastSyncTime = Date.now();
+      }
     },
     setOfflineStatus: (state, action: PayloadAction<boolean>) => {
       state.isOffline = action.payload;
-    },
-    setNetworkStatus: (state, action: PayloadAction<boolean>) => {
-      state.isOffline = !action.payload;
-      
-      // Handle Firestore network status
-      if (state.isOffline) {
-        disableNetwork(db).catch(err => {
-          console.error('Error disabling Firestore network:', err);
-        });
-      } else {
-        enableNetwork(db).catch(err => {
-          console.error('Error enabling Firestore network:', err);
-        });
+      if (!action.payload) { // When coming back online
+        state.retryTimeout = initialState.retryTimeout; // Reset retry timeout
       }
     },
-    logout: (state) => {
-      state.user = null;
-      state.isAuthenticated = false;
-      state.error = null;
+    setError: (state, action: PayloadAction<string | null>) => {
+      state.error = action.payload;
+      state.isLoading = false;
     },
-    updateUserProfile: (state, action: PayloadAction<Partial<UserProfile>>) => {
-      if (state.user) {
-        state.user = { ...state.user, ...action.payload };
-      }
+    setLoading: (state, action: PayloadAction<boolean>) => {
+      state.isLoading = action.payload;
     },
-  },
+    incrementRetryTimeout: (state) => {
+      state.retryTimeout = Math.min(state.retryTimeout * 2, 60000); // Max 1 minute
+    }
+  }
 });
 
 export const { 
   setUser, 
-  setLoading, 
+  setOfflineStatus, 
   setError, 
-  logout, 
-  updateUserProfile,
-  setOfflineStatus,
-  setNetworkStatus
+  setLoading, 
+  incrementRetryTimeout
 } = authSlice.actions;
 
-// Check network status
-export const checkNetworkStatus = () => {
-  return async (dispatch: any) => {
-    // Check if browser is online
-    const updateNetworkStatus = () => {
-      const isOffline = !navigator.onLine;
-      dispatch(setOfflineStatus(isOffline));
+// Thunk for fetching user data with improved offline handling
+export const fetchUserData = (uid: string, retryCount: number = 0) => async (dispatch: any, getState: any) => {
+  const state = getState().auth;
+  
+  // If we're offline and have cached user data that's less than 1 hour old, don't retry
+  if (state.isOffline && state.user && state.lastSyncTime && 
+      (Date.now() - state.lastSyncTime < 3600000) && retryCount > 0) {
+    return;
+  }
+
+  // If we've exceeded max retries, stop
+  if (retryCount >= state.maxRetries) {
+    return;
+  }
+
+  try {
+    dispatch(setLoading(true));
+    const userDoc = await getDoc(doc(db, 'users', uid));
+    
+    if (userDoc.exists()) {
+      const userData = userDoc.data() as Omit<UserProfile, 'uid' | 'email'>;
+      dispatch(setUser({
+        uid,
+        email: '',
+        ...userData
+      }));
+    } else {
+      dispatch(setError('User not found'));
+    }
+  } catch (error: any) {
+    if (error?.code === 'unavailable') {
+      dispatch(setOfflineStatus(true));
       
-      // Enable/disable Firestore network
-      if (isOffline) {
-        disableNetwork(db).catch(err => {
-          console.error('Error disabling Firestore network:', err);
-        });
-      } else {
-        enableNetwork(db).catch(err => {
-          console.error('Error enabling Firestore network:', err);
-        });
+      // Only log the first retry attempt
+      if (retryCount === 0) {
+        console.warn('Device is offline. Using cached data if available.');
       }
-    };
-    
-    // Initial check
-    updateNetworkStatus();
-    
-    // Listen for network status changes
-    window.addEventListener('online', updateNetworkStatus);
-    window.addEventListener('offline', updateNetworkStatus);
-    
-    // Return cleanup function
-    return () => {
-      window.removeEventListener('online', updateNetworkStatus);
-      window.removeEventListener('offline', updateNetworkStatus);
-    };
-  };
+      
+      // Schedule retry with exponential backoff
+      if (retryCount < state.maxRetries) {
+        setTimeout(() => {
+          dispatch(fetchUserData(uid, retryCount + 1));
+          dispatch(incrementRetryTimeout());
+        }, state.retryTimeout);
+      }
+    } else {
+      dispatch(setError(error.message));
+    }
+  } finally {
+    dispatch(setLoading(false));
+  }
 };
 
 // Thunk action for user login
@@ -156,71 +162,7 @@ export const loginUser = (credentials: { email: string; password: string }) => {
       
       try {
         // Get user data from Firestore
-        const userDoc = await getDoc(doc(db, 'users', userCredential.user.uid));
-        
-        if (userDoc.exists()) {
-          const userData = userDoc.data() as Omit<UserProfile, 'uid' | 'email'>;
-          
-          const user: UserProfile = {
-            uid: userCredential.user.uid,
-            email: userCredential.user.email || credentials.email,
-            displayName: userCredential.user.displayName || userData.displayName,
-            phoneNumber: userCredential.user.phoneNumber || userData.phoneNumber,
-            businessName: userData.businessName,
-            businessLocation: userData.businessLocation,
-            fullName: userData.fullName,
-            phone: userData.phone,
-            address: userData.address,
-            agentId: userData.agentId,
-          };
-          
-          dispatch(setUser(user));
-          
-          // Set up listener for user profile updates
-          const unsubscribe = onSnapshot(
-            doc(db, 'users', userCredential.user.uid),
-            (doc) => {
-              if (doc.exists()) {
-                const updatedData = doc.data() as Omit<UserProfile, 'uid' | 'email'>;
-                dispatch(updateUserProfile(updatedData));
-              }
-            },
-            (error) => {
-              console.error('Error listening to user profile updates:', error);
-            }
-          );
-          
-          return user;
-        } else {
-          // Basic user profile if no Firestore data exists
-          const user: UserProfile = {
-            uid: userCredential.user.uid,
-            email: userCredential.user.email || credentials.email,
-            displayName: userCredential.user.displayName || '',
-            phoneNumber: userCredential.user.phoneNumber || '',
-            businessName: '',
-            businessLocation: '',
-            fullName: '',
-            phone: '',
-            address: '',
-            agentId: '',
-          };
-          
-          // Create user document in Firestore
-          await setDoc(doc(db, 'users', userCredential.user.uid), {
-            displayName: user.displayName,
-            phoneNumber: user.phoneNumber,
-            businessName: user.businessName,
-            businessLocation: user.businessLocation,
-            fullName: user.fullName,
-            phone: user.phone,
-            address: user.address,
-            agentId: userCredential.user.uid.substring(0, 6),
-          });
-          
-          dispatch(setUser(user));
-          return user;
-        }
+        await dispatch(fetchUserData(userCredential.user.uid));
       } catch (firestoreError: any) {
         console.error('Firestore error during login:', firestoreError);
         
@@ -237,6 +179,7 @@ export const loginUser = (credentials: { email: string; password: string }) => {
           phone: userCredential.user.phoneNumber || '',
           address: '',
           agentId: userCredential.user.uid.substring(0, 6),
+          nationalId: '',
         };
         
         dispatch(setUser(basicUser));
@@ -269,6 +212,7 @@ export const registerUser = (userData: {
   phoneNumber: string;
   email: string;
   password: string;
+  nationalId: string;
 }) => {
   return async (dispatch: any) => {
     dispatch(setLoading(true));
@@ -303,6 +247,7 @@ export const registerUser = (userData: {
           phone: userData.phoneNumber,
           address: 'Not specified',
           agentId: userCredential.user.uid.substring(0, 6),
+          nationalId: userData.nationalId,
         };
         
         await setDoc(doc(db, 'users', userCredential.user.uid), userProfile);
@@ -331,6 +276,7 @@ export const registerUser = (userData: {
           phone: userData.phoneNumber,
           address: 'Not specified',
           agentId: userCredential.user.uid.substring(0, 6),
+          nationalId: userData.nationalId,
         };
         
         dispatch(setUser(basicUser));
@@ -364,7 +310,7 @@ export const logoutUser = () => {
     try {
       // Use Firebase signOut
       await signOut(auth);
-      dispatch(logout());
+      dispatch(setUser(null));
     } catch (error: any) {
       console.error('Logout error:', error);
       dispatch(setError(error.message || 'Logout failed'));

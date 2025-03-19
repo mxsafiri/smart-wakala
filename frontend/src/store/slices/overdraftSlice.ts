@@ -217,29 +217,50 @@ const overdraftSlice = createSlice({
         (state.creditScoreFactors.accountAge * 0.1)
       );
     },
-    updateCollateral: (state, action: PayloadAction<number | { amount: number; paymentMethod: string }>) => {
-      const newCollateralAmount = typeof action.payload === 'number' 
-        ? action.payload 
-        : action.payload.amount;
+    updateCollateral: (state, action: PayloadAction<{ amount: number; paymentMethod: string }>) => {
+      const { amount, paymentMethod } = action.payload;
       
-      state.collateralAmount = newCollateralAmount;
+      state.collateralAmount = amount;
       
-      // Update overdraft limit based on collateral (typically 2-3x collateral)
-      const multiplier = state.performanceScore >= 80 ? 3 : state.performanceScore >= 60 ? 2.5 : 2;
-      state.overdraftLimit = Math.round(newCollateralAmount * multiplier);
+      // Update overdraft limit based on performance score
+      const leverageMultiplier = state.performanceScore >= 80 ? 3 : state.performanceScore >= 60 ? 2.5 : 2;
+      state.overdraftLimit = Math.round(amount * leverageMultiplier);
       state.availableOverdraft = Math.max(0, state.overdraftLimit - state.overdraftBalance);
       
-      // Update credit score factor
-      state.creditScoreFactors.collateralRatio = Math.min(100, Math.round((newCollateralAmount / state.overdraftLimit) * 100));
+      // Update credit score factors
+      state.creditScoreFactors.collateralRatio = Math.min(100, Math.round((amount / state.overdraftLimit) * 100));
+      
+      // Recalculate overall performance score
+      state.performanceScore = Math.round(
+        (state.creditScoreFactors.repaymentHistory * 0.4) +
+        (state.creditScoreFactors.transactionVolume * 0.3) +
+        (state.creditScoreFactors.collateralRatio * 0.2) +
+        (state.creditScoreFactors.accountAge * 0.1)
+      );
       
       // Add transaction record
       state.overdraftTransactions.unshift({
         id: Date.now().toString(),
         type: 'collateral',
-        amount: newCollateralAmount,
+        amount,
         date: new Date().toISOString(),
-        description: 'Collateral update',
+        description: `Collateral update via ${paymentMethod.replace('_', ' ')}`,
+        paymentMethod,
         status: 'pending'
+      });
+      
+      // Update notifications
+      state.notifications.unshift({
+        id: Date.now().toString(),
+        type: 'collateral_update',
+        message: `Collateral updated to ${new Intl.NumberFormat('sw-TZ', {
+          style: 'currency',
+          currency: 'TZS',
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0
+        }).format(amount)}`,
+        date: new Date().toISOString(),
+        read: false
       });
     },
     requestOverdraft: (state, action: PayloadAction<number | { amount: number; reason: string }>) => {
@@ -271,14 +292,14 @@ const overdraftSlice = createSlice({
 
 export const { 
   setOverdraftData, 
-  updateRepayment, 
-  processTopUp, 
+  updateRepayment,
+  processTopUp,
   updatePerformanceScore,
   updateRepaymentPercentage,
   setNetworkStatus,
-  setLoading, 
-  setProcessing, 
-  setError, 
+  setLoading,
+  setProcessing,
+  setError,
   addOverdraftTransaction,
   updateCreditScoreFactors,
   updateCollateral,

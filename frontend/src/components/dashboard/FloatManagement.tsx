@@ -39,6 +39,19 @@ const FloatManagement: React.FC<FloatManagementProps> = ({
     }).format(amount);
   };
 
+  const getPaymentMethodLabel = (method: string) => {
+    switch (method) {
+      case 'mobile_money':
+        return 'Mobile Money';
+      case 'bank_transfer':
+        return 'Bank Transfer';
+      case 'cash_deposit':
+        return 'Cash Deposit';
+      default:
+        return method;
+    }
+  };
+
   const handleTopUpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!topUpAmount || isProcessing) return;
@@ -69,7 +82,7 @@ const FloatManagement: React.FC<FloatManagementProps> = ({
       if (activeTab === 'topup') {
         await onTopUp(Number(topUpAmount));
         setTopUpAmount('');
-      } else {
+      } else if (activeTab === 'overdraft') {
         await onRequestOverdraft(Number(overdraftAmount), overdraftReason);
         setOverdraftAmount('');
         setOverdraftReason('');
@@ -98,24 +111,17 @@ const FloatManagement: React.FC<FloatManagementProps> = ({
           </div>
         </div>
         
-        {/* Value Proposition and CTA */}
+        {/* Value Proposition */}
         <div className="mb-6 bg-gradient-to-r from-primary-50 to-blue-50 p-4 rounded-lg border border-primary-100">
           <div className="flex items-start">
             <div className="p-2 bg-primary-100 rounded-full mr-3 mt-1">
               <IconComponent Icon={FiTrendingUp} className="h-5 w-5 text-primary-600" />
             </div>
             <div>
-              <h4 className="text-md font-medium text-primary-800 mb-1">Never Run Out of Float</h4>
-              <p className="text-sm text-gray-600 mb-3">
-                Top up your float balance or request an overdraft to ensure you never miss a transaction opportunity.
+              <h4 className="text-md font-medium text-primary-800 mb-1">Need Higher Credit Limits?</h4>
+              <p className="text-sm text-gray-600">
+                Add collateral to increase your credit limits. Higher collateral means better overdraft terms and lower auto-deduction rates.
               </p>
-              <button 
-                onClick={handleQuickTopUp}
-                className="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium py-3 px-4 rounded-md transition duration-150 ease-in-out flex items-center justify-center"
-              >
-                <IconComponent Icon={FiPlus} className="mr-2" />
-                Quick Top-Up
-              </button>
             </div>
           </div>
         </div>
